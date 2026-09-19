@@ -1,1 +1,23 @@
 .DS_Store
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.idea/
+.metadata
+build/
+coverage/
+*.iml
+
+# Generated native files
+android/.gradle/
+android/local.properties
+ios/Flutter/ephemeral/
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Pods/
+ios/.symlinks/
+
+# Secrets and local data
+.env
+.env.*
+!.env.example
