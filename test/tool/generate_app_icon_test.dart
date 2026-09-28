@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -7,6 +8,126 @@ import 'package:image/image.dart' as image;
 import '../../tool/generate_app_icon.dart';
 
 void main() {
+  test(
+    'uses the legacy default with original-scale alternative artwork',
+    () async {
+      final document = jsonDecode(
+        await File('ios/Runner/AppIcon.icon/icon.json').readAsString(),
+      ) as Map<String, dynamic>;
+      final backgroundFills =
+          (document['fill-specializations'] as List<dynamic>)
+              .cast<Map<String, dynamic>>();
+      final defaultFill = backgroundFills.singleWhere(
+        (specialization) => !specialization.containsKey('appearance'),
+      );
+      final darkFill = backgroundFills.singleWhere(
+        (specialization) => specialization['appearance'] == 'dark',
+      );
+      final tintedFill = backgroundFills.singleWhere(
+        (specialization) => specialization['appearance'] == 'tinted',
+      );
+
+      expect(defaultFill['value'], contains('linear-gradient'));
+      expect(darkFill['value'], 'system-dark');
+      expect(tintedFill['value'], 'system-dark');
+
+      final groups = (document['groups'] as List<dynamic>)
+          .cast<Map<String, dynamic>>();
+      final layers = groups
+          .expand(
+            (group) =>
+                (group['layers'] as List<dynamic>).cast<Map<String, dynamic>>(),
+          )
+          .toList();
+      final marbleLayer = layers.singleWhere(
+        (layer) => layer['image-name'] == 'MarbleTexture.png',
+      );
+      final opacities =
+          (marbleLayer['opacity-specializations'] as List<dynamic>)
+              .cast<Map<String, dynamic>>();
+
+      expect(
+        opacities.singleWhere(
+          (specialization) => !specialization.containsKey('appearance'),
+        )['value'],
+        0,
+      );
+      expect(
+        opacities.singleWhere(
+          (specialization) => specialization['appearance'] == 'dark',
+        )['value'],
+        0,
+        reason:
+            'Clear renditions derive from dark and must not contain marble.',
+      );
+      expect(
+        opacities.singleWhere(
+          (specialization) => specialization['appearance'] == 'tinted',
+        )['value'],
+        0,
+      );
+
+      final crownLayer = layers.singleWhere(
+        (layer) => layer['image-name'] == 'CrownForeground.png',
+      );
+      expect(crownLayer['position'], {
+        'scale': 1,
+        'translation-in-points': [0, 0],
+      });
+      final crownOpacities =
+          (crownLayer['opacity-specializations'] as List<dynamic>)
+              .cast<Map<String, dynamic>>();
+      expect(
+        crownOpacities.singleWhere(
+          (specialization) => !specialization.containsKey('appearance'),
+        )['value'],
+        0,
+      );
+      expect(
+        crownOpacities.singleWhere(
+          (specialization) => specialization['appearance'] == 'dark',
+        )['value'],
+        1,
+      );
+      expect(
+        crownOpacities.singleWhere(
+          (specialization) => specialization['appearance'] == 'tinted',
+        )['value'],
+        1,
+      );
+
+      final defaultLayer = layers.singleWhere(
+        (layer) => layer['image-name'] == 'DefaultIcon.png',
+      );
+      expect(defaultLayer['glass'], isFalse);
+      expect(defaultLayer['position'], {
+        'scale': 1,
+        'translation-in-points': [0, 0],
+      });
+      final defaultOpacities =
+          (defaultLayer['opacity-specializations'] as List<dynamic>)
+              .cast<Map<String, dynamic>>();
+      expect(
+        defaultOpacities.singleWhere(
+          (specialization) => !specialization.containsKey('appearance'),
+        )['value'],
+        1,
+      );
+      expect(
+        defaultOpacities.singleWhere(
+          (specialization) => specialization['appearance'] == 'dark',
+        )['value'],
+        0,
+      );
+      expect(
+        defaultOpacities.singleWhere(
+          (specialization) => specialization['appearance'] == 'tinted',
+        )['value'],
+        0,
+      );
+    },
+  );
+
   test('creates an opaque 1024 square with marble at every edge', () async {
     final temporaryDirectory = await Directory.systemTemp.createTemp(
       'crown-app-icon-',
@@ -38,6 +159,91 @@ void main() {
       borderPixels.every((pixel) => (pixel.r + pixel.g + pixel.b) / 3 > 150),
       isTrue,
       reason: 'Every generated edge must contain light marble.',
+    );
+  });
+
+  test('creates deterministic layers for Icon Composer', () async {
+    final temporaryDirectory = await Directory.systemTemp.createTemp(
+      'crown-icon-composer-',
+    );
+    addTearDown(() => temporaryDirectory.delete(recursive: true));
+    final firstOutputDirectory = '${temporaryDirectory.path}/first';
+    final secondOutputDirectory = '${temporaryDirectory.path}/second';
+
+    await generateIconComposerLayers(
+      sourcePath: 'assets/AppIcon.png',
+      outputDirectory: firstOutputDirectory,
+    );
+    await generateIconComposerLayers(
+      sourcePath: 'assets/AppIcon.png',
+      outputDirectory: secondOutputDirectory,
+    );
+
+    for (final filename in [
+      'DefaultIcon.png',
+      'MarbleTexture.png',
+      'CrownForeground.png',
+      'CrownMask.png',
+    ]) {
+      final firstFile = File('$firstOutputDirectory/$filename');
+      final secondFile = File('$secondOutputDirectory/$filename');
+      final firstBytes = await firstFile.readAsBytes();
+      expect(
+        await secondFile.readAsBytes(),
+        orderedEquals(firstBytes),
+        reason: '$filename must be reproducible.',
+      );
+      final generated = image.decodePng(firstBytes)!;
+      expect((generated.width, generated.height), (1024, 1024));
+
+      if (filename != 'CrownMask.png') {
+        expect(
+          await File('ios/Runner/AppIcon.icon/Assets/$filename').readAsBytes(),
+          orderedEquals(firstBytes),
+          reason: '$filename must be synchronized with AppIcon.icon.',
+        );
+      }
+    }
+
+    expect(
+      await File('$firstOutputDirectory/DefaultIcon.png').readAsBytes(),
+      orderedEquals(
+        await File('assets/generated/AppIconSquare.png').readAsBytes(),
+      ),
+      reason: 'The default Icon Composer layer must be the legacy icon.',
+    );
+
+    final texture = image.decodePng(
+      await File('$firstOutputDirectory/MarbleTexture.png').readAsBytes(),
+    )!;
+    final foreground = image.decodePng(
+      await File('$firstOutputDirectory/CrownForeground.png').readAsBytes(),
+    )!;
+    final mask = image.decodePng(
+      await File('$firstOutputDirectory/CrownMask.png').readAsBytes(),
+    )!;
+
+    expect(texture.numChannels, 4);
+    expect(
+      texture.every((pixel) => pixel.r == pixel.g && pixel.g == pixel.b),
+      isTrue,
+    );
+    expect(texture.any((pixel) => pixel.a == 0), isTrue);
+    expect(texture.any((pixel) => pixel.a > 0), isTrue);
+    expect(foreground.numChannels, 4);
+    expect(mask.numChannels, 4);
+    expect(foreground.getPixel(0, 0).a, 0);
+    expect(mask.getPixel(0, 0).a, 0);
+    expect(
+      mask.every((pixel) {
+        final foregroundPixel = foreground.getPixel(pixel.x, pixel.y);
+        return pixel.a == foregroundPixel.a &&
+            pixel.r == 255 &&
+            pixel.g == 255 &&
+            pixel.b == 255;
+      }),
+      isTrue,
+      reason: 'The monochrome mask must exactly match the crown silhouette.',
     );
   });
 

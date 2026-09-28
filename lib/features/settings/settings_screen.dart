@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/crown_theme.dart';
+import '../../app/crown_wordmark.dart';
 import '../../game_engine/crown_ai.dart';
 import '../../persistence/crown_repository.dart';
 
@@ -41,70 +42,98 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Profile')),
     body: SafeArea(
       top: false,
       bottom: false,
-      child: ListView(
-        padding: EdgeInsets.fromLTRB(24, 24, 24, widget.bottomPadding),
-        children: [
-          GlassPanel(
-            child: Column(
-              children: [
-                SwitchListTile(
-                  title: const Text('Sound'),
-                  subtitle: const Text('Play sounds when pieces move'),
-                  value: _settings.sound,
-                  onChanged: (value) => _save(_settings.copyWith(sound: value)),
+      child: CustomScrollView(
+        key: const ValueKey('profile-scroll'),
+        slivers: [
+          SliverAppBar(floating: true, backgroundColor: Colors.transparent),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+            sliver: SliverToBoxAdapter(
+              child: CrownWordmark(
+                title: 'PROFILE',
+                logo: Image.asset(
+                  'assets/ProfileLogo.png',
+                  key: const ValueKey('profile-header-logo'),
+                  width: 42,
+                  height: 42,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                  excludeFromSemantics: true,
                 ),
-                SwitchListTile(
-                  title: const Text('Haptics'),
-                  subtitle: const Text('Tactile move feedback'),
-                  value: _settings.haptics,
-                  onChanged: (value) =>
-                      _save(_settings.copyWith(haptics: value)),
-                ),
-                SwitchListTile(
-                  title: const Text('Board coordinates'),
-                  value: _settings.showCoordinates,
-                  onChanged: (value) =>
-                      _save(_settings.copyWith(showCoordinates: value)),
-                ),
-                SwitchListTile(
-                  title: const Text('Reduced motion'),
-                  value: _settings.reducedMotion,
-                  onChanged: (value) =>
-                      _save(_settings.copyWith(reducedMotion: value)),
-                ),
-                SwitchListTile(
-                  title: const Text('Increased contrast'),
-                  value: _settings.highContrast,
-                  onChanged: (value) =>
-                      _save(_settings.copyWith(highContrast: value)),
-                ),
-              ],
+              ),
             ),
           ),
-          const SizedBox(height: 20),
-          GlassPanel(
-            child: ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: const Icon(
-                Icons.psychology_alt_outlined,
-                color: CrownColors.gold,
-              ),
-              title: const Text('Reset Crown AI'),
-              subtitle: const Text(
-                'Return adaptive strength to its starting point.',
-              ),
-              onTap: () async {
-                await widget.repository.saveAiProfile(const AiProfile());
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Crown AI has been reset.')),
-                  );
-                }
-              },
+          const SliverToBoxAdapter(child: SizedBox(height: 34)),
+          SliverPadding(
+            padding: EdgeInsets.fromLTRB(24, 0, 24, widget.bottomPadding),
+            sliver: SliverList.list(
+              children: [
+                GlassPanel(
+                  child: Column(
+                    children: [
+                      SwitchListTile(
+                        title: const Text('Sound'),
+                        subtitle: const Text('Play sounds when pieces move'),
+                        value: _settings.sound,
+                        onChanged: (value) =>
+                            _save(_settings.copyWith(sound: value)),
+                      ),
+                      SwitchListTile(
+                        title: const Text('Haptics'),
+                        subtitle: const Text('Tactile move feedback'),
+                        value: _settings.haptics,
+                        onChanged: (value) =>
+                            _save(_settings.copyWith(haptics: value)),
+                      ),
+                      SwitchListTile(
+                        title: const Text('Board coordinates'),
+                        value: _settings.showCoordinates,
+                        onChanged: (value) =>
+                            _save(_settings.copyWith(showCoordinates: value)),
+                      ),
+                      SwitchListTile(
+                        title: const Text('Reduced motion'),
+                        value: _settings.reducedMotion,
+                        onChanged: (value) =>
+                            _save(_settings.copyWith(reducedMotion: value)),
+                      ),
+                      SwitchListTile(
+                        title: const Text('Increased contrast'),
+                        value: _settings.highContrast,
+                        onChanged: (value) =>
+                            _save(_settings.copyWith(highContrast: value)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                GlassPanel(
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(
+                      Icons.psychology_alt_outlined,
+                      color: CrownColors.gold,
+                    ),
+                    title: const Text('Reset Crown AI'),
+                    subtitle: const Text(
+                      'Return adaptive strength to its starting point.',
+                    ),
+                    onTap: () async {
+                      await widget.repository.saveAiProfile(const AiProfile());
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Crown AI has been reset.'),
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
         ],

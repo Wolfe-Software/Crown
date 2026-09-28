@@ -3,8 +3,11 @@ import 'package:crown/app/crown_icon.dart';
 import 'package:crown/app/crown_theme.dart';
 import 'package:crown/features/learn/learn_curriculum.dart';
 import 'package:crown/features/learn/learn_screen.dart';
+import 'package:crown/features/learn/guided_match_screen.dart';
+import 'package:crown/features/learn/lesson_asset_loader.dart';
 import 'package:crown/features/learn/lesson_board.dart';
-import 'package:crown/features/learn/lesson_one_screen.dart';
+import 'package:crown/features/learn/lesson_screen.dart';
+import 'package:crown/features/learn/lesson_session_controller.dart';
 import 'package:crown/features/match/checker_piece.dart';
 import 'package:crown/game_engine/checkers_engine.dart';
 import 'package:crown/persistence/crown_repository.dart';
@@ -15,13 +18,32 @@ import 'package:flutter_test/flutter_test.dart';
 Finder tile(int number) => find.byKey(ValueKey('lesson-$number'));
 Finder get sheet => find.byKey(const ValueKey('lesson-details-sheet'));
 
+void _tapTurn(LessonSessionController controller, Turn turn) {
+  controller.tapSquare(turn.origin);
+  for (final landing in turn.landings) {
+    controller.tapSquare(landing);
+  }
+}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  late LearnCatalog learnCatalog;
+  late List<LearnUnit> curriculum;
+
+  setUpAll(() async {
+    learnCatalog = await LessonAssetLoader().loadCatalog(
+      'assets/learn/catalog.json',
+    );
+    curriculum = learnCatalog.units;
+  });
+
   Future<void> pumpLearn(
     WidgetTester tester, {
     Size size = const Size(390, 844),
     double textScale = 1,
     int lastCompletedLesson = 0,
     bool highContrast = false,
+    bool reducedMotion = false,
     bool showCoordinates = false,
     Future<void> Function(int lesson)? onLessonCompleted,
   }) async {
@@ -38,9 +60,11 @@ void main() {
           child: child!,
         ),
         home: LearnScreen(
+          catalog: learnCatalog,
           bottomPadding: 100,
           lastCompletedLesson: lastCompletedLesson,
           highContrast: highContrast,
+          reducedMotion: reducedMotion,
           showCoordinates: showCoordinates,
           onLessonCompleted: onLessonCompleted,
         ),
@@ -53,7 +77,7 @@ void main() {
     tester,
   ) async {
     await pumpLearn(tester);
-    for (final unit in learnCurriculum) {
+    for (final unit in curriculum) {
       for (final lesson in unit.lessons) {
         await tester.ensureVisible(tile(lesson.number));
         await tester.tap(tile(lesson.number));
@@ -61,7 +85,7 @@ void main() {
         expect(sheet, findsOneWidget);
         expect(find.byKey(const ValueKey('lesson-objective')), findsOneWidget);
         for (final label in [
-          'UNIT ${unit.number}',
+          'UNIT ${unit.number} · LESSONS ${unit.lessons.first.number}–${unit.lessons.last.number}',
           unit.name,
           'LESSON ${lesson.number}',
           lesson.name,
@@ -97,7 +121,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(sheet, findsNothing);
-    expect(find.byType(LessonOneScreen), findsOneWidget);
+    expect(find.byType(LessonScreen), findsOneWidget);
     expect(find.text('Set up the black pieces'), findsOneWidget);
     expect(find.byKey(const ValueKey('coordinate-0-0')), findsOneWidget);
   });
@@ -116,7 +140,7 @@ void main() {
     await tester.pumpAndSettle();
 
     final controller = tester
-        .widget<LessonOneScreen>(find.byType(LessonOneScreen))
+        .widget<LessonScreen>(find.byType(LessonScreen))
         .controller;
     for (final square in const [Square(0, 1), Square(1, 2), Square(2, 3)]) {
       controller.tapSquare(square);
@@ -148,7 +172,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(completedLesson, 1);
-    expect(find.byType(LessonOneScreen), findsNothing);
+    expect(find.byType(LessonScreen), findsNothing);
     expect(find.byKey(const ValueKey('next-lesson-2')), findsOneWidget);
     expect(
       tester.widget<Semantics>(tile(2)).properties.label,
@@ -175,6 +199,312 @@ void main() {
     expect(find.byKey(const ValueKey('next-lesson-1')), findsOneWidget);
     expect(find.byKey(const ValueKey('completed-lesson-1')), findsNothing);
   });
+
+  testWidgets('Lesson 2 launches and completion advances to Lesson 3', (
+    tester,
+  ) async {
+    int? completedLesson;
+    await pumpLearn(
+      tester,
+      lastCompletedLesson: 1,
+      showCoordinates: true,
+      onLessonCompleted: (lesson) async => completedLesson = lesson,
+    );
+    await tester.tap(tile(2));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'START'));
+    await tester.pumpAndSettle();
+
+    expect(sheet, findsNothing);
+    expect(find.byType(LessonScreen), findsOneWidget);
+    expect(find.byKey(const ValueKey('coordinate-0-0')), findsOneWidget);
+
+    final controller = tester
+        .widget<LessonScreen>(find.byType(LessonScreen))
+        .controller;
+    for (var exercise = 0; exercise < 5; exercise++) {
+      _tapTurn(controller, controller.legalTurns.single);
+      await tester.pump(LessonSessionController.jumpDuration);
+      final action = find.widgetWithText(
+        FilledButton,
+        exercise == 4 ? 'COMPLETE LESSON' : 'CONTINUE',
+      );
+      await tester.ensureVisible(action);
+      if (exercise == 4) {
+        expect(
+          find.text('Kings are captured like any other checker.'),
+          findsOneWidget,
+        );
+        expect(
+          find.text(
+            'Jump diagonally over an adjacent opponent into the empty square beyond it. Men capture forward, and they can capture either men or kings.',
+          ),
+          findsNothing,
+        );
+      }
+      await tester.tap(action);
+      await tester.pumpAndSettle();
+    }
+
+    expect(completedLesson, 2);
+    expect(find.byType(LessonScreen), findsNothing);
+    expect(find.byKey(const ValueKey('completed-lesson-2')), findsOneWidget);
+    expect(find.byKey(const ValueKey('next-lesson-3')), findsOneWidget);
+  });
+
+  testWidgets('leaving Lesson 2 early does not report progress', (
+    tester,
+  ) async {
+    int? completedLesson;
+    await pumpLearn(
+      tester,
+      lastCompletedLesson: 1,
+      onLessonCompleted: (lesson) async => completedLesson = lesson,
+    );
+    await tester.tap(tile(2));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'START'));
+    await tester.pumpAndSettle();
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    expect(completedLesson, isNull);
+    expect(find.byKey(const ValueKey('completed-lesson-1')), findsOneWidget);
+    expect(find.byKey(const ValueKey('next-lesson-2')), findsOneWidget);
+  });
+
+  testWidgets('Lesson 3 completes through standard actions and advances', (
+    tester,
+  ) async {
+    int? completedLesson;
+    await pumpLearn(
+      tester,
+      lastCompletedLesson: 2,
+      reducedMotion: true,
+      showCoordinates: true,
+      onLessonCompleted: (lesson) async => completedLesson = lesson,
+    );
+    await tester.tap(tile(3));
+    await tester.pumpAndSettle();
+    expect(find.text('Capture Is Compulsory'), findsOneWidget);
+    await tester.tap(find.widgetWithText(FilledButton, 'START'));
+    await tester.pumpAndSettle();
+
+    expect(sheet, findsNothing);
+    expect(find.byType(LessonScreen), findsOneWidget);
+    expect(find.byKey(const ValueKey('coordinate-0-0')), findsOneWidget);
+
+    final controller = tester
+        .widget<LessonScreen>(find.byType(LessonScreen))
+        .controller;
+    for (var exercise = 0; exercise < 4; exercise++) {
+      final turn = controller.legalTurns.first;
+      _tapTurn(controller, turn);
+      await tester.pump();
+      final action = find.widgetWithText(FilledButton, 'CONTINUE');
+      await tester.ensureVisible(action);
+      await tester.tap(action);
+      await tester.pump();
+    }
+    final finalTurn = controller.legalTurns.single;
+    _tapTurn(controller, finalTurn);
+    await tester.pump(controller.opponentPause);
+    expect(
+      find.text(
+        'If any capture is available, you must make one. When several captures are legal, the choice is yours.',
+      ),
+      findsOneWidget,
+    );
+    final complete = find.widgetWithText(FilledButton, 'COMPLETE LESSON');
+    await tester.ensureVisible(complete);
+    await tester.tap(complete);
+    await tester.pumpAndSettle();
+
+    expect(completedLesson, 3);
+    expect(find.byType(LessonScreen), findsNothing);
+    expect(find.byKey(const ValueKey('completed-lesson-3')), findsOneWidget);
+    expect(find.byKey(const ValueKey('next-lesson-4')), findsOneWidget);
+  });
+
+  testWidgets('leaving Lesson 3 early does not report progress', (
+    tester,
+  ) async {
+    int? completedLesson;
+    await pumpLearn(
+      tester,
+      lastCompletedLesson: 2,
+      onLessonCompleted: (lesson) async => completedLesson = lesson,
+    );
+    await tester.tap(tile(3));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'START'));
+    await tester.pumpAndSettle();
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    expect(completedLesson, isNull);
+    expect(find.byKey(const ValueKey('completed-lesson-2')), findsOneWidget);
+    expect(find.byKey(const ValueKey('next-lesson-3')), findsOneWidget);
+  });
+
+  for (final lessonNumber in [4, 5, 6, 7]) {
+    testWidgets('Lesson $lessonNumber completes and advances progress', (
+      tester,
+    ) async {
+      int? completedLesson;
+      await pumpLearn(
+        tester,
+        lastCompletedLesson: lessonNumber - 1,
+        reducedMotion: true,
+        onLessonCompleted: (lesson) async => completedLesson = lesson,
+      );
+      await tester.tap(tile(lessonNumber));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'START'));
+      await tester.pumpAndSettle();
+
+      final controller = tester
+          .widget<LessonScreen>(find.byType(LessonScreen))
+          .controller;
+      for (var exercise = 0; exercise < controller.exerciseCount; exercise++) {
+        if (controller.choiceOptions.isEmpty) {
+          final turn = controller.legalTurns.first;
+          _tapTurn(controller, turn);
+        } else {
+          controller.selectChoice(controller.exercise.correctChoiceId!);
+        }
+        await tester.pumpAndSettle();
+        if (!controller.exerciseComplete) {
+          await tester.pump(controller.opponentPause);
+        }
+        final action = find.widgetWithText(
+          FilledButton,
+          exercise == controller.exerciseCount - 1
+              ? 'COMPLETE LESSON'
+              : 'CONTINUE',
+        );
+        if (lessonNumber == 7) {
+          expect(
+            find.byKey(const ValueKey('lesson-result-sheet')),
+            findsOneWidget,
+          );
+        }
+        await tester.ensureVisible(action);
+        await tester.tap(action);
+        await tester.pumpAndSettle();
+      }
+
+      expect(completedLesson, lessonNumber);
+      expect(find.byType(LessonScreen), findsNothing);
+      expect(
+        find.byKey(ValueKey('completed-lesson-$lessonNumber')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(ValueKey('next-lesson-${lessonNumber + 1}')),
+        findsOneWidget,
+      );
+    });
+  }
+
+  testWidgets('Lesson 7 is available after completing Lesson 6', (
+    tester,
+  ) async {
+    await pumpLearn(tester, lastCompletedLesson: 6);
+    await tester.tap(tile(7));
+    await tester.pumpAndSettle();
+
+    final start = find.widgetWithText(FilledButton, 'START');
+    expect(start, findsOneWidget);
+    expect(tester.widget<FilledButton>(start).onPressed, isNotNull);
+  });
+
+  testWidgets('Lesson 8 unlocks, requires the recap, and advances to Unit 2', (
+    tester,
+  ) async {
+    final repository = MemoryCrownRepository();
+    await repository.saveLearnProgress(
+      const LearnProgress(lastCompletedLesson: 7),
+    );
+    await pumpLearn(
+      tester,
+      lastCompletedLesson: 7,
+      reducedMotion: true,
+      onLessonCompleted: (lesson) => repository.saveLearnProgress(
+        LearnProgress(lastCompletedLesson: lesson),
+      ),
+    );
+    await tester.tap(tile(8));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'START'));
+    await tester.pumpAndSettle();
+    final controller = tester
+        .widget<GuidedMatchScreen>(find.byType(GuidedMatchScreen))
+        .controller;
+    expect(controller.match.state.pieces, hasLength(24));
+    // Fast-forward only the game position; exercise the real win/review/route gate.
+    controller.match.session = controller.match.session.copyWith(
+      state: GameState.custom(
+        sideToMove: Side.black,
+        pieces: {
+          const Square(2, 1): const Piece.blackMan(),
+          const Square(3, 2): const Piece.whiteMan(),
+        },
+      ),
+    );
+    await tester.tap(find.text('BEGIN MATCH'));
+    await tester.pumpAndSettle();
+    await controller.tapSquare(const Square(4, 3));
+    await tester.pumpAndSettle();
+    expect((await repository.loadLearnProgress()).lastCompletedLesson, 7);
+    await tester.ensureVisible(find.text('REVIEW UNIT 1'));
+    await tester.tap(find.text('REVIEW UNIT 1'));
+    await tester.pumpAndSettle();
+    expect(find.text('CONTINUE REVIEW'), findsNothing);
+    expect((await repository.loadLearnProgress()).lastCompletedLesson, 7);
+    await tester.ensureVisible(find.text('COMPLETE LESSON'));
+    await tester.tap(find.text('COMPLETE LESSON'));
+    await tester.pumpAndSettle();
+    expect((await repository.loadLearnProgress()).lastCompletedLesson, 8);
+    expect(find.byKey(const ValueKey('completed-lesson-8')), findsOneWidget);
+    expect(find.byKey(const ValueKey('next-lesson-9')), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byKey(const ValueKey('learn-unit-summary')),
+        matching: find.text('UNIT 2 · LESSONS 9–16'),
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(tile(9));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(FilledButton, 'COMING SOON'), findsOneWidget);
+  });
+
+  testWidgets(
+    'Lesson 8 remains locked before Lesson 7 and early exit preserves progress',
+    (tester) async {
+      await pumpLearn(tester, lastCompletedLesson: 6);
+      await tester.tap(tile(8));
+      await tester.pumpAndSettle();
+      expect(find.widgetWithText(FilledButton, 'LOCKED'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+      int? completed;
+      await pumpLearn(
+        tester,
+        lastCompletedLesson: 7,
+        onLessonCompleted: (value) async => completed = value,
+      );
+      await tester.tap(tile(8));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'START'));
+      await tester.pumpAndSettle();
+      expect(find.byType(GuidedMatchScreen), findsOneWidget);
+      await tester.tap(find.text('RETURN TO LEARN'));
+      await tester.pumpAndSettle();
+      expect(completed, isNull);
+      expect(find.byKey(const ValueKey('next-lesson-8')), findsOneWidget);
+    },
+  );
 
   testWidgets('browsing never changes the progress-driven current unit', (
     tester,
@@ -332,6 +662,28 @@ void main() {
     },
   );
 
+  testWidgets('lesson details format unit information like the unit list', (
+    tester,
+  ) async {
+    await pumpLearn(tester);
+    await tester.tap(tile(1));
+    await tester.pumpAndSettle();
+
+    final unitLabel = find.descendant(
+      of: sheet,
+      matching: find.text('UNIT 1 · LESSONS 1–8'),
+    );
+    final unitName = find.descendant(
+      of: sheet,
+      matching: find.text(curriculum.first.name),
+    );
+    expect(unitLabel, findsOneWidget);
+    expect(unitName, findsOneWidget);
+    expect(tester.widget<Text>(unitLabel).textAlign, isNot(TextAlign.center));
+    expect(tester.widget<Text>(unitName).style?.fontSize, 26);
+    expect(tester.widget<Text>(unitName).style?.height, 1.15);
+  });
+
   testWidgets('unit label follows the board and precedes the hint and legend', (
     tester,
   ) async {
@@ -436,7 +788,31 @@ void main() {
     expect(tester.getRect(list).overlaps(tester.getRect(current)), isTrue);
   });
 
-  testWidgets('unit directory opens from the label and fills its former area', (
+  testWidgets('unit list has no empty scroll runway at either edge', (
+    tester,
+  ) async {
+    await pumpLearn(tester, lastCompletedLesson: 24);
+    await tester.tap(find.byKey(const ValueKey('learn-unit-summary')));
+    await tester.pumpAndSettle();
+
+    final list = find.byKey(const ValueKey('learn-unit-list'));
+    final pane = find.byKey(const ValueKey('learn-unit-list-pane'));
+    final first = find.byKey(const ValueKey('unit-list-label-1'));
+    final last = find.byKey(const ValueKey('unit-list-label-8'));
+
+    await tester.drag(list, const Offset(0, 2000));
+    await tester.pumpAndSettle();
+    expect(tester.getRect(first).top, closeTo(tester.getRect(pane).top, .1));
+
+    await tester.drag(list, const Offset(0, -4000));
+    await tester.pumpAndSettle();
+    expect(
+      tester.getRect(last).bottom,
+      closeTo(tester.getRect(pane).bottom, .1),
+    );
+  });
+
+  testWidgets('unit directory replaces the board and fills its former area', (
     tester,
   ) async {
     await pumpLearn(tester, lastCompletedLesson: 8);
@@ -450,20 +826,10 @@ void main() {
 
     final pane = find.byKey(const ValueKey('learn-unit-list-pane'));
     final current = find.byKey(const ValueKey('unit-list-header-2'));
-    final first = find.byKey(const ValueKey('unit-list-header-1'));
     expect(find.byType(LessonBoard).hitTestable(), findsNothing);
     expect(find.text('Tap anywhere to return to the board.'), findsOneWidget);
     expect(tester.getRect(pane).top, closeTo(boardRect.top, .1));
     expect(tester.getRect(pane).bottom, closeTo(summaryRect.bottom, .1));
-    expect(tester.getRect(current).top, closeTo(summaryRect.top, .1));
-
-    final currentStart = tester.getTopLeft(current).dy;
-    final firstStart = tester.getTopLeft(first).dy;
-    await tester.pump(const Duration(milliseconds: 125));
-    final currentDelta = tester.getTopLeft(current).dy - currentStart;
-    final firstDelta = tester.getTopLeft(first).dy - firstStart;
-    expect(currentDelta.abs(), greaterThan(1));
-    expect(firstDelta, closeTo(currentDelta, .1));
 
     await tester.pumpAndSettle();
     expect(tester.getRect(pane).overlaps(tester.getRect(current)), isTrue);
@@ -535,15 +901,28 @@ void main() {
           await tester.tap(tile(number));
           await tester.pumpAndSettle();
           final locked = number > completed + 1;
+          final available =
+              curriculum
+                  .expand((unit) => unit.lessons)
+                  .firstWhere((lesson) => lesson.number == number)
+                  .status ==
+              LessonStatus.available;
+          final actionable = !locked && available;
           final action = find.widgetWithText(
             FilledButton,
-            locked ? 'LOCKED' : 'START',
+            locked
+                ? 'LOCKED'
+                : available
+                ? 'START'
+                : 'COMING SOON',
           );
           final button = tester.widget<FilledButton>(action);
-          expect(button.onPressed, locked ? isNull : isNotNull);
+          expect(button.onPressed, actionable ? isNotNull : isNull);
           final surface = tester.widget<DecoratedBox>(
             find.byKey(
-              ValueKey(locked ? 'metal-surface-silver' : 'metal-surface-gold'),
+              ValueKey(
+                actionable ? 'metal-surface-gold' : 'metal-surface-silver',
+              ),
             ),
           );
           final finish = surface.decoration as BoxDecoration;
@@ -563,7 +942,7 @@ void main() {
           for (var index = 1; index < brightness.length; index++) {
             expect(brightness[index - 1], greaterThan(brightness[index]));
           }
-          if (!locked) {
+          if (actionable) {
             expect(colors.last.g, greaterThan(.54));
             expect(colors.last.b, greaterThan(.19));
             expect(colors.last.r - colors.last.g, lessThan(.18));
@@ -573,11 +952,13 @@ void main() {
             find.descendant(
               of: find.byKey(
                 ValueKey(
-                  locked ? 'metal-surface-silver' : 'metal-surface-gold',
+                  actionable ? 'metal-surface-gold' : 'metal-surface-silver',
                 ),
               ),
               matching: find.byKey(
-                ValueKey(locked ? 'metal-brush-silver' : 'metal-brush-gold'),
+                ValueKey(
+                  actionable ? 'metal-brush-gold' : 'metal-brush-silver',
+                ),
               ),
             ),
             findsOneWidget,
@@ -658,13 +1039,10 @@ void main() {
         await tester.pumpAndSettle();
         final action = find.widgetWithText(
           FilledButton,
-          19 > completed + 1 ? 'LOCKED' : 'START',
+          19 > completed + 1 ? 'LOCKED' : 'COMING SOON',
         );
         await tester.ensureVisible(action);
-        expect(
-          tester.widget<FilledButton>(action).onPressed,
-          19 > completed + 1 ? isNull : isNotNull,
-        );
+        expect(tester.widget<FilledButton>(action).onPressed, isNull);
         await tester.tap(action);
         await tester.pumpAndSettle();
         await tester.tap(find.byTooltip('Close lesson details'));
@@ -744,7 +1122,9 @@ void main() {
           showCoordinates: true,
         ),
       );
-      await tester.pumpWidget(CrownApp(repository: repository));
+      await tester.pumpWidget(
+        CrownApp(repository: repository, learnCatalog: learnCatalog),
+      );
       await tester.pumpAndSettle();
       await tester.tap(find.text('Learn'));
       await tester.pumpAndSettle();

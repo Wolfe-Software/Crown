@@ -11,6 +11,7 @@ class PlayerStrip extends StatelessWidget {
     required this.isCrownAi,
     required this.active,
     required this.pieces,
+    this.reducedMotion = false,
     super.key,
   });
 
@@ -19,6 +20,7 @@ class PlayerStrip extends StatelessWidget {
   final bool isCrownAi;
   final bool active;
   final int pieces;
+  final bool reducedMotion;
 
   @override
   Widget build(BuildContext context) => Semantics(
@@ -28,7 +30,9 @@ class PlayerStrip extends StatelessWidget {
     child: ExcludeSemantics(
       child: AnimatedContainer(
         key: ValueKey('player-strip-${side.name}'),
-        duration: const Duration(milliseconds: 200),
+        duration: reducedMotion
+            ? Duration.zero
+            : const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         decoration: BoxDecoration(
           color: Colors.white.withValues(alpha: active ? .72 : .42),
@@ -66,17 +70,34 @@ class PlayerStrip extends StatelessWidget {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                name,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-            ),
-            Text(
-              '$pieces PIECES',
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                color: active ? CrownColors.gold : CrownColors.muted,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final nameLabel = Text(
+                    name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  );
+                  final countLabel = Text(
+                    '$pieces PIECES',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: active ? CrownColors.gold : CrownColors.muted,
+                    ),
+                  );
+                  if (constraints.maxWidth < 220 ||
+                      MediaQuery.textScalerOf(context).scale(14) > 20) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [nameLabel, countLabel],
+                    );
+                  }
+                  return Row(
+                    children: [
+                      Expanded(child: nameLabel),
+                      countLabel,
+                    ],
+                  );
+                },
               ),
             ),
           ],

@@ -42,6 +42,13 @@ Future<void> generateMarbleBackground({
   required String sourcePath,
   required String outputPath,
 }) async {
+  final marble = await _createMarbleBackground(sourcePath);
+  final outputFile = File(outputPath);
+  await outputFile.parent.create(recursive: true);
+  await outputFile.writeAsBytes(image.encodePng(marble));
+}
+
+Future<image.Image> _createMarbleBackground(String sourcePath) async {
   final source = image.decodePng(await File(sourcePath).readAsBytes());
   if (source == null) {
     throw StateError('Unable to decode $sourcePath as a PNG image.');
@@ -151,32 +158,91 @@ Future<void> generateMarbleBackground({
               .clamp(0, 255);
   }
 
-  final outputFile = File(outputPath);
-  await outputFile.parent.create(recursive: true);
-  await outputFile.writeAsBytes(image.encodePng(marble));
+  return marble;
 }
 
 Future<void> generateCrownLogo({
   required String sourcePath,
   required String outputPath,
 }) async {
-  final artwork = await _createSquareArtwork(sourcePath);
-  final mask = _createCrownMask();
-  final logo = image.Image(width: _iconSize, height: _iconSize, numChannels: 4);
-
-  for (final pixel in logo) {
-    final sourcePixel = artwork.getPixel(pixel.x, pixel.y);
-    final alpha = mask.getPixel(pixel.x, pixel.y).r.toInt();
-    pixel
-      ..r = sourcePixel.r
-      ..g = sourcePixel.g
-      ..b = sourcePixel.b
-      ..a = alpha;
-  }
+  final logo = await _createCrownForeground(sourcePath);
 
   final outputFile = File(outputPath);
   await outputFile.parent.create(recursive: true);
   await outputFile.writeAsBytes(image.encodePng(logo));
+}
+
+Future<void> generateIconComposerLayers({
+  required String sourcePath,
+  required String outputDirectory,
+}) async {
+  final defaultIcon = await _createSquareArtwork(sourcePath);
+  final marble = await _createMarbleBackground(sourcePath);
+  final foreground = await _createCrownForeground(sourcePath);
+  final texture = image.Image(
+    width: _iconSize,
+    height: _iconSize,
+    numChannels: 4,
+  );
+  final mask = image.Image(width: _iconSize, height: _iconSize, numChannels: 4);
+
+  var totalLuminance = 0.0;
+  for (final pixel in marble) {
+    totalLuminance += pixel.r * .2126 + pixel.g * .7152 + pixel.b * .0722;
+  }
+  final averageLuminance = totalLuminance / marble.length;
+
+  for (final pixel in texture) {
+    final marblePixel = marble.getPixel(pixel.x, pixel.y);
+    final luminance =
+        marblePixel.r * .2126 + marblePixel.g * .7152 + marblePixel.b * .0722;
+    final difference = luminance - averageLuminance;
+    final channel = difference >= 0 ? 255 : 0;
+    pixel
+      ..r = channel
+      ..g = channel
+      ..b = channel
+      ..a = ((difference.abs() - 3) * 5).clamp(0, 115);
+  }
+
+  for (final pixel in mask) {
+    pixel
+      ..r = 255
+      ..g = 255
+      ..b = 255
+      ..a = foreground.getPixel(pixel.x, pixel.y).a;
+  }
+
+  final output = Directory(outputDirectory);
+  await output.create(recursive: true);
+  await File('${output.path}/DefaultIcon.png')
+      .writeAsBytes(image.encodePng(defaultIcon));
+  await File('${output.path}/MarbleTexture.png')
+      .writeAsBytes(image.encodePng(texture));
+  await File('${output.path}/CrownForeground.png')
+      .writeAsBytes(image.encodePng(foreground));
+  await File('${output.path}/CrownMask.png')
+      .writeAsBytes(image.encodePng(mask));
+}
+
+Future<image.Image> _createCrownForeground(String sourcePath) async {
+  final artwork = await _createSquareArtwork(sourcePath);
+  final crownMask = _createCrownMask();
+  final foreground = image.Image(
+    width: _iconSize,
+    height: _iconSize,
+    numChannels: 4,
+  );
+
+  for (final pixel in foreground) {
+    final sourcePixel = artwork.getPixel(pixel.x, pixel.y);
+    pixel
+      ..r = sourcePixel.r
+      ..g = sourcePixel.g
+      ..b = sourcePixel.b
+      ..a = crownMask.getPixel(pixel.x, pixel.y).r;
+  }
+  return foreground;
 }
 
 Future<void> generateBrokenCrownLogo({
@@ -628,6 +694,7 @@ Future<void> main() async {
   const logoOutputPath = 'assets/CrownLogo.png';
   const brokenLogoOutputPath = 'assets/BrokenCrownLogo.png';
   const drawLogoOutputPath = 'assets/DrawLogo.png';
+  const iconComposerOutputDirectory = 'assets/generated/app_icon';
   await generateAppIcon(sourcePath: sourcePath, outputPath: iconOutputPath);
   await generateMarbleBackground(
     sourcePath: sourcePath,
@@ -642,8 +709,13 @@ Future<void> main() async {
     sourcePath: logoOutputPath,
     outputPath: drawLogoOutputPath,
   );
+  await generateIconComposerLayers(
+    sourcePath: sourcePath,
+    outputDirectory: iconComposerOutputDirectory,
+  );
   stdout.writeln(
     'Generated $iconOutputPath, $marbleOutputPath, $logoOutputPath, '
-    '$brokenLogoOutputPath, and $drawLogoOutputPath from $sourcePath.',
+    '$brokenLogoOutputPath, $drawLogoOutputPath, and Icon Composer layers in '
+    '$iconComposerOutputDirectory from $sourcePath.',
   );
 }

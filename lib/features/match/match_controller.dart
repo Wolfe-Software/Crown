@@ -12,10 +12,22 @@ typedef AiMoveChooser = Future<Turn> Function(
 typedef AiDelay = Future<void> Function(Duration duration);
 typedef JumpDelay = Future<void> Function(Duration duration);
 
+enum MatchSessionPolicy { regular, lesson }
+
+enum MatchInputFeedback {
+  selected,
+  invalidPiece,
+  invalidDestination,
+  compulsoryCapture,
+  continueJump,
+}
+
 class MatchController extends ChangeNotifier {
   MatchController({
     required this.session,
     required this.repository,
+    this.policy = MatchSessionPolicy.regular,
+    this.lessonAiProfile = const AiProfile(skill: 0),
     AiMoveChooser? aiMoveChooser,
     this.minimumAiTurnDuration = const Duration(milliseconds: 800),
     AiDelay? aiDelay,
@@ -29,6 +41,8 @@ class MatchController extends ChangeNotifier {
        _jumpDelay = jumpDelay ?? Future<void>.delayed;
 
   final CrownRepository repository;
+  final MatchSessionPolicy policy;
+  final AiProfile lessonAiProfile;
   final CheckersEngine _engine = const CheckersEngine();
   final AiMoveChooser _aiMoveChooser;
   final AiDelay _aiDelay;
@@ -45,6 +59,16 @@ class MatchController extends ChangeNotifier {
   JumpAnimation? _activeJump;
   final ChangeNotifier _landingEvents = ChangeNotifier();
   bool _disposed = false;
+  Object? aiError;
+  MatchInputFeedback? inputFeedback;
+  GameState? lastTurnStart;
+
+  bool get hasCaptureInProgress => _prefix.isNotEmpty;
+
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
 
   /// One event per accepted landing, after its animation (if any).
   Listenable get landings => _landingEvents;
@@ -136,12 +160,14 @@ class MatchController extends ChangeNotifier {
   Map<Square, Piece> get displayPieces => _animationBoard ?? previewPieces;
 
   Future<void> tapSquare(Square square) async {
-    if (state.result != null ||
+    if (_disposed ||
+        state.result != null ||
         _isAiThinking ||
         _isAnimatingJump ||
         !isHumanTurn) {
       return;
     }
+    inputFeedback = null;
     final legal = _engine.legalTurns(state);
     if (_origin == null) {
       final destinationTurns = legal
@@ -154,13 +180,20 @@ class MatchController extends ChangeNotifier {
         _origin = possibleOrigins.single;
         _prefix.clear();
       } else if (possibleOrigins.length > 1) {
+        inputFeedback = MatchInputFeedback.selected;
+        notifyListeners();
         return;
       } else if (legal.any((turn) => turn.origin == square)) {
         _origin = square;
         _prefix.clear();
+        inputFeedback = MatchInputFeedback.selected;
         notifyListeners();
         return;
       } else {
+        inputFeedback = legal.any((turn) => turn.isCapture)
+            ? MatchInputFeedback.compulsoryCapture
+            : MatchInputFeedback.invalidPiece;
+        notifyListeners();
         return;
       }
     }
@@ -177,6 +210,7 @@ class MatchController extends ChangeNotifier {
           to: square,
           captured: matching.captures[index],
         );
+        if (_disposed) return;
       }
       _prefix.add(square);
       if (!animated) _landed();
@@ -188,6 +222,7 @@ class MatchController extends ChangeNotifier {
           !matches.any((turn) => turn.landings.length > _prefix.length)) {
         await _commit(complete.first);
       } else {
+        inputFeedback = MatchInputFeedback.continueJump;
         notifyListeners();
       }
       return;
@@ -199,35 +234,57 @@ class MatchController extends ChangeNotifier {
     } else if (_prefix.isEmpty && square == _origin) {
       _origin = null;
       notifyListeners();
+    } else {
+      inputFeedback = hasCaptureInProgress
+          ? MatchInputFeedback.continueJump
+          : legal.any((turn) => turn.isCapture)
+          ? MatchInputFeedback.compulsoryCapture
+          : MatchInputFeedback.invalidDestination;
+      notifyListeners();
     }
   }
 
   Future<void> start() async {
-    await repository.saveActiveMatch(session);
+    if (_disposed) return;
+    if (policy == MatchSessionPolicy.regular) {
+      await repository.saveActiveMatch(session);
+    }
     await playAiIfNeeded();
   }
 
   Future<void> playAiIfNeeded() async {
-    if (session.mode != MatchMode.ai ||
+    if (_disposed ||
+        session.mode != MatchMode.ai ||
         state.result != null ||
         state.sideToMove == session.humanSide ||
         _isAiThinking) {
       return;
     }
     _isAiThinking = true;
+    aiError = null;
     notifyListeners();
     try {
       final minimumWait = _aiDelay(minimumAiTurnDuration);
-      final profile = await repository.loadAiProfile();
+      final profile = policy == MatchSessionPolicy.lesson
+          ? lessonAiProfile
+          : await repository.loadAiProfile();
+      if (_disposed || state.result != null) return;
       final turn = await _aiMoveChooser(state, profile);
       await minimumWait;
-      if (state.result != null) return;
+      if (_disposed || state.result != null) return;
+      if (!_engine.legalTurns(state).contains(turn)) {
+        throw StateError('AI returned an illegal turn');
+      }
       if (animateJumps && turn.isCapture) await _animateTurn(turn);
+      if (_disposed || state.result != null) return;
       await _commit(
         turn,
         triggerAi: false,
         landingCount: animateJumps && turn.isCapture ? 0 : turn.landings.length,
       );
+    } catch (error) {
+      if (policy == MatchSessionPolicy.regular && !_disposed) rethrow;
+      if (!_disposed && state.result == null) aiError = error;
     } finally {
       _isAiThinking = false;
       notifyListeners();
@@ -235,7 +292,7 @@ class MatchController extends ChangeNotifier {
   }
 
   Future<void> resign(Side side) async {
-    if (state.result != null || _isAnimatingJump) return;
+    if (_disposed || state.result != null || _isAnimatingJump) return;
     session = session.copyWith(state: _engine.resign(state, side));
     _clearSelection();
     await _finish();
@@ -247,7 +304,10 @@ class MatchController extends ChangeNotifier {
     bool triggerAi = true,
     int landingCount = 0,
   }) async {
+    if (_disposed) return;
+    lastTurnStart = state;
     session = session.copyWith(state: _engine.applyTurn(state, turn));
+    inputFeedback = null;
     _animationBoard = null;
     _activeJump = null;
     _clearSelection();
@@ -255,7 +315,9 @@ class MatchController extends ChangeNotifier {
       _landed();
     }
     if (state.result == null) {
-      await repository.saveActiveMatch(session);
+      if (policy == MatchSessionPolicy.regular) {
+        await repository.saveActiveMatch(session);
+      }
     } else {
       await _finish();
     }
@@ -264,6 +326,7 @@ class MatchController extends ChangeNotifier {
   }
 
   Future<void> _finish() async {
+    if (policy == MatchSessionPolicy.lesson) return;
     await repository.clearActiveMatch();
     await repository.addHistory(MatchRecord.fromSession(session));
     if (session.mode == MatchMode.ai && session.humanSide != null) {
@@ -287,6 +350,7 @@ class MatchController extends ChangeNotifier {
     _animationBoard = Map<Square, Piece>.of(state.pieces);
     var from = turn.origin;
     for (var index = 0; index < turn.landings.length; index++) {
+      if (_disposed) return;
       await _animateJump(
         from: from,
         to: turn.landings[index],
@@ -313,6 +377,7 @@ class MatchController extends ChangeNotifier {
     _isAnimatingJump = true;
     notifyListeners();
     await _jumpDelay(jumpDuration);
+    if (_disposed) return;
     _animationBoard!
       ..remove(captured)
       ..[to] = piece;

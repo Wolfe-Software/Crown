@@ -1,0 +1,91 @@
+{
+  "schemaVersion": 2,
+  "id": "lesson-003",
+  "number": 3,
+  "name": "Capture Is Compulsory",
+  "exercises": [
+    {
+      "id": "capture-before-moving",
+      "title": "Capture Before Moving",
+      "instruction": "A capture is available. Take it before making any other move.",
+      "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 5, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 6}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 3}, "side": "black", "rank": "man"},
+        {"square": {"row": 0, "column": 1}, "side": "black", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}], "captures": [{"row": 4, "column": 3}]}
+      ]},
+      "feedback": {"initial": "A capture is available. Take it before making any other move.", "selected": "Selected. Jump to the highlighted landing square.", "success": "If you can capture, you must capture. Ordinary moves are unavailable until no capture exists.", "invalidPiece": "A capture is available, so you must use a checker that can capture.", "invalidDestination": "That square is not a legal capture destination."}
+    },
+    {
+      "id": "check-whole-board",
+      "title": "Check the Whole Board",
+      "instruction": "One of your checkers must capture. Find it and make the jump.",
+      "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 4, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 7}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 6}, "side": "black", "rank": "man"},
+        {"square": {"row": 0, "column": 1}, "side": "black", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 6, "column": 7}, "landings": [{"row": 4, "column": 5}], "captures": [{"row": 5, "column": 6}]}
+      ]},
+      "feedback": {"initial": "One of your checkers must capture. Find it and make the jump.", "selected": "Selected. Jump to the highlighted landing square.", "success": "Check the entire board before moving. A capture anywhere makes an ordinary move illegal everywhere.", "invalidPiece": "A capture is available, so you must use a checker that can capture.", "invalidDestination": "That square is not a legal capture destination."}
+    },
+    {
+      "id": "choose-checker",
+      "title": "Choose the Capturing Checker",
+      "instruction": "Two of your checkers can capture. Choose either one.",
+      "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 5, "column": 0}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 6}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 4, "column": 5}, "side": "black", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 5, "column": 0}, "landings": [{"row": 3, "column": 2}], "captures": [{"row": 4, "column": 1}]},
+        {"origin": {"row": 5, "column": 6}, "landings": [{"row": 3, "column": 4}], "captures": [{"row": 4, "column": 5}]}
+      ]},
+      "feedback": {"initial": "Two of your checkers can capture. Choose either one.", "selected": "Selected. Choose either highlighted capture.", "success": "When several checkers can capture, you may choose which checker to use.", "invalidPiece": "A capture is available, so you must use a checker that can capture.", "invalidDestination": "That square is not a legal capture destination."}
+    },
+    {
+      "id": "choose-target",
+      "title": "Choose the Target",
+      "instruction": "Both captures are legal. Choose either one.",
+      "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 5, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 4, "column": 3}, "side": "black", "rank": "king"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 0}], "captures": [{"row": 4, "column": 1}]},
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}], "captures": [{"row": 4, "column": 3}]}
+      ]},
+      "feedback": {"initial": "Both captures are legal. Choose either one.", "selected": "Selected. Choose either highlighted capture.", "success": "If more than one capture is available, you may choose. You do not have to capture a king instead of a regular checker.", "invalidPiece": "A capture is available, so you must use a checker that can capture.", "invalidDestination": "That square is not a legal capture destination."}
+    },
+    {
+      "id": "accept-consequence",
+      "title": "Even When It Costs You",
+      "instruction": "This capture is risky, but it is still required. Make the jump.",
+      "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 5, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 1, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 1}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 5}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 3}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 3}, "side": "black", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}], "captures": [{"row": 4, "column": 3}]}
+      ], "opponentReply": {"origin": {"row": 2, "column": 3}, "landings": [{"row": 4, "column": 5}], "captures": [{"row": 3, "column": 4}]}, "opponentPauseMs": 550},
+      "feedback": {"initial": "This capture is risky, but it is still required. Make the jump.", "selected": "Selected. Jump to the highlighted landing square.", "awaitingReply": "The capture was required. Watch the reply.", "success": "If any capture is available, you must make one. When several captures are legal, the choice is yours.", "invalidPiece": "A capture is available, so you must use a checker that can capture.", "invalidDestination": "That square is not a legal capture destination."}
+    }
+  ]
+}

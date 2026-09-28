@@ -3,15 +3,18 @@ import 'package:flutter/material.dart';
 import '../../app/crown_bottom_modal.dart';
 import '../../app/crown_theme.dart';
 import 'learn_curriculum.dart';
+import 'learn_unit_header.dart';
 
 enum LessonDetailsAction { start }
 
 Future<LessonDetailsAction?> showLessonDetails({
   required BuildContext context,
+  required List<LearnUnit> curriculum,
   required LearnUnit unit,
   required LearnLesson lesson,
   required bool locked,
   required bool reducedMotion,
+  required bool highContrast,
 }) => showCrownBottomModal<LessonDetailsAction>(
   context: context,
   reducedMotion: reducedMotion || MediaQuery.disableAnimationsOf(context),
@@ -36,18 +39,10 @@ Future<LessonDetailsAction?> showLessonDetails({
               ],
             ),
             const SizedBox(height: 12),
-            Text(
-              'UNIT ${unit.number}',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelLarge
-                  ?.copyWith(color: CrownColors.gold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              unit.name,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium
-                  ?.copyWith(color: CrownColors.muted, height: 1.4),
+            LearnUnitHeader(
+              curriculum: curriculum,
+              unit: unit,
+              highContrast: highContrast,
             ),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 20),
@@ -83,13 +78,17 @@ Future<LessonDetailsAction?> showLessonDetails({
                 finish: MetalFinish.silver,
                 onPressed: null,
               )
-            else
+            else if (lesson.status == LessonStatus.available)
               GoldButton(
                 label: 'START',
-                onPressed: lesson.number == 1
-                    ? () =>
-                          Navigator.pop(sheetContext, LessonDetailsAction.start)
-                    : () {},
+                onPressed: () =>
+                    Navigator.pop(sheetContext, LessonDetailsAction.start),
+              ),
+            if (!locked && lesson.status == LessonStatus.planned)
+              const MetalButton(
+                label: 'COMING SOON',
+                finish: MetalFinish.silver,
+                onPressed: null,
               ),
           ],
         ),

@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 2,
+  "id": "lesson-001",
+  "number": 1,
+  "name": "Meet the Board",
+  "exercises": [
+    {
+      "id": "place-black",
+      "title": "Set up the black pieces",
+      "instruction": "Black begins on the three rows nearest you. Tap the three gaps in Black's starting position.",
+      "perspective": "black",
+      "board": {
+        "source": "initialWithRemovedPieces",
+        "removed": [{"row": 0, "column": 1}, {"row": 1, "column": 2}, {"row": 2, "column": 3}]
+      },
+      "interaction": {
+        "type": "placement",
+        "piece": {"side": "black", "rank": "man"},
+        "targets": [{"row": 0, "column": 1}, {"row": 1, "column": 2}, {"row": 2, "column": 3}]
+      },
+      "feedback": {
+        "initial": "Find and replace the three missing black pieces.",
+        "progress": "Correct. Place {remaining} more black {pieceWord}.",
+        "success": "Black now has all 12 starting pieces.",
+        "invalidPiece": "That square already has a piece. Find an empty gap.",
+        "invalidDestination": "That is not a gap in Black's starting rows."
+      }
+    },
+    {
+      "id": "place-white",
+      "title": "Set up the white pieces",
+      "instruction": "White begins on the three rows nearest you. Tap the three gaps in White's starting position.",
+      "perspective": "white",
+      "board": {
+        "source": "initialWithRemovedPieces",
+        "removed": [{"row": 5, "column": 0}, {"row": 6, "column": 1}, {"row": 7, "column": 2}]
+      },
+      "interaction": {
+        "type": "placement",
+        "piece": {"side": "white", "rank": "man"},
+        "targets": [{"row": 5, "column": 0}, {"row": 6, "column": 1}, {"row": 7, "column": 2}]
+      },
+      "feedback": {
+        "initial": "Find and replace the three missing white pieces.",
+        "progress": "Correct. Place {remaining} more white {pieceWord}.",
+        "success": "White now has all 12 starting pieces.",
+        "invalidPiece": "That square already has a piece. Find an empty gap.",
+        "invalidDestination": "That is not a gap in White's starting rows."
+      }
+    },
+    {
+      "id": "move-black",
+      "title": "Make Black's first move",
+      "instruction": "Black moves first. Select a black checker, then move it diagonally forward to an empty dark square.",
+      "perspective": "black",
+      "board": {"source": "initial", "sideToMove": "black"},
+      "interaction": {"type": "turn", "acceptance": "allLegal"},
+      "feedback": {
+        "initial": "Select a black piece that can move.",
+        "selected": "Selected. Choose a highlighted destination.",
+        "success": "Legal move. Black moves forward toward the far side of the board.",
+        "invalidPiece": "Select a black piece that has a legal forward diagonal move.",
+        "invalidDestination": "Select a black piece that has a legal forward diagonal move."
+      }
+    },
+    {
+      "id": "move-white",
+      "title": "Reply as White",
+      "instruction": "Turns alternate. Select a white checker and make one legal forward diagonal move.",
+      "perspective": "white",
+      "board": {"source": "previousExerciseResult", "sideToMove": "white"},
+      "interaction": {"type": "turn", "acceptance": "allLegal"},
+      "feedback": {
+        "initial": "Now select a white piece that can move.",
+        "selected": "Selected. Choose a highlighted destination.",
+        "success": "Legal move. White moves forward toward the far side of the board.",
+        "invalidPiece": "Select a white piece that has a legal forward diagonal move.",
+        "invalidDestination": "Select a white piece that has a legal forward diagonal move."
+      }
+    }
+  ]
+}

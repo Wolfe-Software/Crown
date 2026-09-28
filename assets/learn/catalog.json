@@ -1,0 +1,573 @@
+{
+  "schemaVersion": 1,
+  "units": [
+    {
+      "number": 1,
+      "name": "The Fundamentals",
+      "lessons": [
+        {
+          "id": "lesson-001",
+          "number": 1,
+          "name": "Meet the Board",
+          "objective": "Restore the starting position and make the first move for each side.",
+          "overview": "Have the player replace three missing black pieces, replace three missing white pieces, then make one legal move for Black and one for White.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-001.json"
+        },
+        {
+          "id": "lesson-002",
+          "number": 2,
+          "name": "Making Captures",
+          "objective": "Jump opposing pieces and learn which single captures are legal.",
+          "overview": "Teach single forward captures by men: jump an adjacent opponent into the empty square beyond it, remove the captured piece, and distinguish blocked, friendly, backward, and king targets.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-002.json"
+        },
+        {
+          "id": "lesson-003",
+          "number": 3,
+          "name": "Capture Is Compulsory",
+          "objective": "Learn that any available capture must be taken before an ordinary move.",
+          "overview": "Teach compulsory captures across the board, free choice among legal single captures without rank priority, and why an unfavorable capture is still required.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-003.json"
+        },
+        {
+          "id": "lesson-004",
+          "number": 4,
+          "name": "Keep Jumping",
+          "objective": "Follow a capture through every jump with the same piece.",
+          "overview": "Teach complete multiple-jump sequences and choices between capture routes. Practice continuing with the same piece and recognizing when a sequence ends.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-004.json"
+        },
+        {
+          "id": "lesson-005",
+          "number": 5,
+          "name": "Becoming a King",
+          "objective": "Reach the promotion row and learn when your turn ends.",
+          "overview": "Explain the promotion row and that reaching it ends the turn, including during a capture. Guide pieces to promotion through ordinary moves and jumps.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-005.json"
+        },
+        {
+          "id": "lesson-006",
+          "number": 6,
+          "name": "Moving with Kings",
+          "objective": "Use a king’s backward moves and captures to explore new routes.",
+          "overview": "Teach one-square forward and backward movement, backward captures, and changing direction during multiple jumps. Compare legal moves for kings and uncrowned pieces.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-006.json"
+        },
+        {
+          "id": "lesson-007",
+          "number": 7,
+          "name": "How Games End",
+          "objective": "Recognize wins, resignation, and drawn positions.",
+          "overview": "Cover winning by capturing or immobilizing the opponent, resignation, and basic draw recognition. Classify finished positions and introduce Crown’s draw indicators.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-007.json"
+        },
+        {
+          "id": "lesson-008",
+          "number": 8,
+          "name": "Challenge: Your First Game",
+          "objective": "Win a full guided match against Crown AI and review Unit 1.",
+          "overview": "Play from the standard starting position as Black, with contextual guidance and an always-available Unit 1 rules reference. Beat beginner Crown AI, then finish the complete rules recap to complete the lesson. Retry after a loss or draw.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-008.json"
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "name": "Keeping Your Pieces Safe",
+      "lessons": [
+        {
+          "id": "lesson-009",
+          "number": 9,
+          "name": "Spot the Threat",
+          "objective": "Find the pieces your opponent could capture next turn.",
+          "overview": "Identify pieces the opponent could capture on their next turn. Mark both the threatened piece and the landing square that makes the jump possible.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-010",
+          "number": 10,
+          "name": "Before You Move",
+          "objective": "Check whether moving one piece exposes another to capture.",
+          "overview": "Show how moving one piece can expose another. Preview a candidate move and identify any new captures it permits.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-011",
+          "number": 11,
+          "name": "Find a Safe Square",
+          "objective": "Choose a legal destination that avoids an immediate material loss.",
+          "overview": "Compare legal destinations for the same piece. Choose a destination that avoids an immediate material loss in the supplied position.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-012",
+          "number": 12,
+          "name": "Protecting a Piece",
+          "objective": "Protect your pieces through support and blocked jump destinations.",
+          "overview": "Introduce support through recaptures and denying jump landing squares. Show why merely standing beside a friendly piece does not guarantee protection.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-013",
+          "number": 13,
+          "name": "Count the Exchange",
+          "objective": "Count each side’s losses through a capture and recapture.",
+          "overview": "Follow a short capture-and-recapture sequence and count what each side loses. Distinguish equal exchanges from losing trades.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-014",
+          "number": 14,
+          "name": "Beware the Second Jump",
+          "objective": "See the full damage hidden behind an opponent’s first jump.",
+          "overview": "Show how a seemingly harmless capture can become a multiple jump. Identify the full damage before deciding whether a move is safe.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-015",
+          "number": 15,
+          "name": "The Safety Check",
+          "objective": "Check forced captures, the opponent’s reply, and the resulting exchange.",
+          "overview": "Combine the section into a repeatable routine: check compulsory captures, inspect the opponent’s reply, and count the resulting exchange. Apply it to mixed positions.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-016",
+          "number": 16,
+          "name": "Challenge: Hold Your Ground",
+          "objective": "Defend short positions without preventable material losses.",
+          "overview": "Play short defensive positions and a brief continuation. Succeed by avoiding preventable material losses, rather than by defeating the opponent outright.",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "name": "Forcing Moves and Combinations",
+      "lessons": [
+        {
+          "id": "lesson-017",
+          "number": 17,
+          "name": "Make Them Jump",
+          "objective": "Use compulsory captures to force a specific response.",
+          "overview": "Introduce using compulsory captures to direct an opponent’s response. Choose a move that forces a specific capture when no alternative capture exists.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-018",
+          "number": 18,
+          "name": "Give One, Take Two",
+          "objective": "Offer one piece to force a reply that wins back more material.",
+          "overview": "Teach a basic material-winning sacrifice. Offer one piece, follow the forced reply, and recover more material than was sacrificed.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-019",
+          "number": 19,
+          "name": "Build a Multiple Jump",
+          "objective": "Find the setup move that creates a multiple-jump capture.",
+          "overview": "Arrange an opponent’s pieces into a capturable sequence. Find the setup move before executing the combination.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-020",
+          "number": 20,
+          "name": "Remove the Defender",
+          "objective": "Force away a supporting piece and exploit the weakness it leaves.",
+          "overview": "Force away or exchange a piece that supports an opponent’s position. Exploit the weakness created after its removal.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-021",
+          "number": 21,
+          "name": "Open the Landing Square",
+          "objective": "Clear the landing square needed to make a capture possible.",
+          "overview": "Teach that a blocked landing square can prevent a capture. Find a forcing sequence that clears the required square.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-022",
+          "number": 22,
+          "name": "Choose Your Capture",
+          "objective": "Compare capture routes by what happens after the jumps.",
+          "overview": "Compare alternative legal capture routes by their consequences. Include examples where taking more immediately produces a worse result.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-023",
+          "number": 23,
+          "name": "When the Sacrifice Fails",
+          "objective": "Test a tempting sacrifice against alternative replies and recaptures.",
+          "overview": "Examine tempting combinations that fail because of another legal reply or a final recapture. Separate sound sacrifices from hopeful ones.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-024",
+          "number": 24,
+          "name": "Challenge: Find the Combination",
+          "objective": "Find a sound setup and continuation in unfamiliar tactical positions.",
+          "overview": "Solve unfamiliar positions mixing the section’s patterns. Require the setup and continuation, including recognizing a position where the apparent combination does not work.",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "name": "Thinking Ahead",
+      "lessons": [
+        {
+          "id": "lesson-025",
+          "number": 25,
+          "name": "Their Best Reply",
+          "objective": "Find your opponent’s strongest reply to a proposed move.",
+          "overview": "Replace “What do I want them to do?” with “What can they do?” Choose the opponent’s strongest immediate response to a proposed move.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-026",
+          "number": 26,
+          "name": "Your Move, Their Move, Your Move",
+          "objective": "Predict the squares and material balance three turns ahead.",
+          "overview": "Calculate a three-turn sequence before moving. Predict the final squares and material balance, then play it out.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-027",
+          "number": 27,
+          "name": "Find the Branches",
+          "objective": "Spot where a forced sequence gives way to a choice of replies.",
+          "overview": "Distinguish a forced sequence from one with alternatives. Identify the points where the opponent can choose a different reply.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-028",
+          "number": 28,
+          "name": "Compare Two Plans",
+          "objective": "Look ahead equally far to compare two candidate moves.",
+          "overview": "Analyze two candidate moves using the same short lookahead. Compare the resulting material, safety, and promotion prospects.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-029",
+          "number": 29,
+          "name": "Finish the Sequence",
+          "objective": "Resolve the forced captures before judging an exchange.",
+          "overview": "Avoid evaluating halfway through a capture exchange. Continue until immediate forced captures are resolved before judging the outcome.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-030",
+          "number": 30,
+          "name": "Work Backward",
+          "objective": "Work back from a desired capture or promotion to find its setup.",
+          "overview": "Start from a desired capture or promotion and identify the arrangement needed to achieve it. Find a short sequence that creates that arrangement.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-031",
+          "number": 31,
+          "name": "Calculate Without Moving",
+          "objective": "Track a short sequence mentally and identify its final position.",
+          "overview": "Gradually remove preview assistance. Track a short sequence mentally, then select or reconstruct its final position.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-032",
+          "number": 32,
+          "name": "Challenge: Read Ahead",
+          "objective": "Choose a move and predict the response with limited preview help.",
+          "overview": "Solve mixed positions with limited preview support. Give the move and expected response; accept multiple sound solutions where appropriate.",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "name": "Building a Strong Position",
+      "lessons": [
+        {
+          "id": "lesson-033",
+          "number": 33,
+          "name": "Beyond the Piece Count",
+          "objective": "Judge mobility, support, and promotion chances alongside material.",
+          "overview": "Introduce mobility, support, and promotion prospects as additional ways to judge a position. Compare equal-material examples with visibly different strengths.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-034",
+          "number": 34,
+          "name": "Stay Connected",
+          "objective": "Improve coordination without creating an immediate tactical weakness.",
+          "overview": "Explain how coordinated pieces can support exchanges and advances. Improve a fragmented position without creating an immediate tactical weakness.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-035",
+          "number": 35,
+          "name": "Using the Center",
+          "objective": "Develop useful central influence while keeping your pieces supported.",
+          "overview": "Explore central influence and access to both sides of the board. Contrast useful central development with an unsupported advance.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-036",
+          "number": 36,
+          "name": "Playing the Edges",
+          "objective": "Weigh an edge route’s protection against its limited mobility.",
+          "overview": "Examine the trade-off between fewer attacking approaches and fewer movement options. Choose between an edge route and a central route in contrasting positions.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-037",
+          "number": 37,
+          "name": "Keep Your Options",
+          "objective": "Preserve useful moves or restrict your opponent’s choices.",
+          "overview": "Teach mobility and the danger of cramped formations. Select a move that preserves useful future moves or restricts the opponent.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-038",
+          "number": 38,
+          "name": "Guarding the Back Row",
+          "objective": "Decide when a back-row defender should stay or advance.",
+          "overview": "Explain how back-row pieces can obstruct promotion and why holding them forever can also be costly. Decide when to retain or release a defender.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-039",
+          "number": 39,
+          "name": "Trade with a Purpose",
+          "objective": "Choose exchanges that improve your position or open a route forward.",
+          "overview": "Evaluate exchanges that improve structure, remove a troublesome piece, or open a route forward. Compare the board before and after an equal trade.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-040",
+          "number": 40,
+          "name": "Challenge: Improve Your Position",
+          "objective": "Improve coordination, mobility, or promotion chances without conceding a tactic.",
+          "overview": "Play several short scenarios with clear positional objectives. Assess whether the player improves mobility, coordination, or promotion prospects without conceding a tactic.",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "name": "The Road to Promotion",
+      "lessons": [
+        {
+          "id": "lesson-041",
+          "number": 41,
+          "name": "Find a Route to Crown",
+          "objective": "Trace a promising promotion path and identify its obstacles.",
+          "overview": "Trace possible promotion paths and identify obstacles. Select a promising route rather than simply advancing the nearest piece.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-042",
+          "number": 42,
+          "name": "Escort the Runner",
+          "objective": "Use supporting pieces to keep an advancing piece safe.",
+          "overview": "Use supporting pieces to help an advancing piece survive. Choose an escort move that answers an interception threat.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-043",
+          "number": 43,
+          "name": "Break Through",
+          "objective": "Weigh the cost of an exchange or sacrifice that opens a promotion route.",
+          "overview": "Use an exchange or sacrifice to open a promotion route. Compare the material cost with the resulting position.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-044",
+          "number": 44,
+          "name": "Stop Their Promotion",
+          "objective": "Intercept, block, or exchange an opposing runner before it crowns.",
+          "overview": "Recognize an opposing runner and calculate an interception, block, or forced exchange. Solve defensive promotion problems.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-045",
+          "number": 45,
+          "name": "Race to the Back Row",
+          "objective": "Count the turns to promotion and decide whether to race or defend.",
+          "overview": "Count turns to promotion while accounting for forced captures and interference. Decide whether to race or stop the opponent.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-046",
+          "number": 46,
+          "name": "Activate Your King",
+          "objective": "Bring your new king into useful play while avoiding traps.",
+          "overview": "Bring a newly crowned king into useful play. Compare routes that improve its reach while avoiding traps and captures.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-047",
+          "number": 47,
+          "name": "King and Piece Together",
+          "objective": "Use a king to support an uncrowned piece’s advance.",
+          "overview": "Coordinate a king with an uncrowned piece. Use the king to support an advance, remove an obstacle, or protect a promotion route.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-048",
+          "number": 48,
+          "name": "Challenge: Earn the Crown",
+          "objective": "Create and use a king, then stop an opposing promotion.",
+          "overview": "Complete paired scenarios: create a king and use it effectively in one; prevent a dangerous opposing promotion in another.",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "name": "Winning and Drawing Endgames",
+      "lessons": [
+        {
+          "id": "lesson-049",
+          "number": 49,
+          "name": "Take Stock of the Ending",
+          "objective": "Assess a sparse position and decide whether to convert or defend.",
+          "overview": "Assess material, kings, mobility, and immediate threats in sparse positions. Identify whether the practical task is to convert, defend, or investigate further.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-050",
+          "number": 50,
+          "name": "Trading When Ahead",
+          "objective": "Check whether a proposed exchange preserves your advantage.",
+          "overview": "Show when exchanging pieces simplifies a win—and when it gives away the advantage. Compare concrete end positions instead of teaching an absolute rule.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-051",
+          "number": 51,
+          "name": "Opposition and Move Timing",
+          "objective": "Discover how the side to move can change an ending’s outcome.",
+          "overview": "Introduce simple positions whose outcome depends on whose turn it is. Play matched examples with the side to move reversed.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-052",
+          "number": 52,
+          "name": "Keep a Move in Reserve",
+          "objective": "Decide when to spend an extra move to influence the timing.",
+          "overview": "Use an available move elsewhere on the board to influence timing. Decide when to spend or preserve that move in a small, verified position.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-053",
+          "number": 53,
+          "name": "Coordinate Your Kings",
+          "objective": "Use two kings together to reduce an opponent’s escape routes.",
+          "overview": "Use two kings to restrict an opponent’s options while protecting one another. Practice reducing escape routes instead of chasing independently.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-054",
+          "number": 54,
+          "name": "Finish the Win",
+          "objective": "Preserve a winning ending through accurate moves to the finish.",
+          "overview": "Convert selected, verified winning endings through capture or immobilization. Focus on preserving the win across several accurate moves.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-055",
+          "number": 55,
+          "name": "Save the Draw",
+          "objective": "Defend a drawable ending with safe positioning and draw awareness.",
+          "overview": "Defend selected drawable endings through safe positioning and avoiding traps. Reinforce repetition and Crown’s implemented draw procedure.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-056",
+          "number": 56,
+          "name": "Challenge: Win or Hold",
+          "objective": "Convert a winning ending and hold a drawable one.",
+          "overview": "Convert one verified winning position and defend one verified drawable position against a suitable response policy. Offer targeted retries from the first consequential mistake.",
+          "status": "planned"
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "name": "Putting It All Together",
+      "lessons": [
+        {
+          "id": "lesson-057",
+          "number": 57,
+          "name": "A Sound Opening",
+          "objective": "Develop safely from the starting position with support and mobility.",
+          "overview": "Apply safety, support, and mobility from the starting position. Compare early moves by their purpose without requiring named-opening memorization.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-058",
+          "number": 58,
+          "name": "Understand Their Last Move",
+          "objective": "Identify what your opponent’s last move changed and respond.",
+          "overview": "After each opposing move, identify what changed: a threat, an opening, a weakened defender, or a promotion route. Select an appropriate response.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-059",
+          "number": 59,
+          "name": "Choose a Plan",
+          "objective": "Set a concrete middlegame goal and choose a move that advances it.",
+          "overview": "Assess a middlegame position and choose a concrete goal, such as improving a cramped side or preparing a breakthrough. Select a move that advances it.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-060",
+          "number": 60,
+          "name": "Know When to Change Plans",
+          "objective": "Recognize when an opposing reply calls for a different plan.",
+          "overview": "Introduce an opponent’s reply that changes the position. Recognize when an existing plan should be revised or abandoned.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-061",
+          "number": 61,
+          "name": "Play with an Advantage",
+          "objective": "Continue a favorable position with safe, purposeful play.",
+          "overview": "Combine safety, purposeful exchanges, and promotion planning. Continue a favorable middlegame without assuming that every trade is beneficial.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-062",
+          "number": 62,
+          "name": "Play from Behind",
+          "objective": "Preserve sound resistance, tactical opportunities, and drawing chances.",
+          "overview": "Look for sound resistance, tactical opportunities, and drawing chances. Choose moves that preserve possibilities instead of relying on an obvious opponent mistake.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-063",
+          "number": 63,
+          "name": "Learn from Your Game",
+          "objective": "Review a consequential decision and identify a useful skill to practice.",
+          "overview": "Review a short replay, locate a consequential decision, try an improvement, and identify the associated skill. End by selecting a useful practice topic.",
+          "status": "planned"
+        },
+        {
+          "id": "lesson-064",
+          "number": 64,
+          "name": "Final Challenge: A Complete Game",
+          "objective": "Play a complete game, then review and improve several key decisions.",
+          "overview": "Play a full game at an appropriate fixed difficulty, then complete a guided review of several decisions. Assess the application of skills and the review—not victory alone.",
+          "status": "planned"
+        }
+      ]
+    }
+  ]
+}

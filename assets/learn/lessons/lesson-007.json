@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 2,
+  "id": "lesson-007",
+  "number": 7,
+  "name": "How Games End",
+  "exercises": [
+    {
+      "id": "how-games-end-1",
+      "title": "The Final Checker",
+      "instruction": "Capture White's final checker.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"}
+      ]},
+      "outcome": {"winner": "black", "reason": "noPieces"},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 2, "column": 1}, "landings": [{"row": 4, "column": 3}], "captures": [{"row": 3, "column": 2}]}
+      ]},
+      "feedback": {
+        "initial": "A player wins immediately after capturing the opponent's final checker.",
+        "selected": "Jump over White's final checker.",
+        "success": "Victory. White has no checkers left.",
+        "invalidPiece": "Choose the black checker.",
+        "invalidDestination": "Capture the white checker by jumping over it."
+      }
+    },
+    {
+      "id": "how-games-end-2",
+      "title": "No Way Out",
+      "instruction": "Make the move that leaves White unable to move.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 2, "column": 3}, "side": "black", "rank": "king"},
+        {"square": {"row": 1, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 1, "column": 0}, "side": "white", "rank": "man"}
+      ]},
+      "outcome": {"winner": "black", "reason": "noLegalMove"},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 2, "column": 3}, "landings": [{"row": 0, "column": 1}], "captures": [{"row": 1, "column": 2}]}
+      ]},
+      "feedback": {
+        "initial": "You also win when the opponent still has a checker but cannot make a legal move.",
+        "selected": "Capture the checker beside your king.",
+        "success": "Victory. White's remaining checker has no legal move.",
+        "invalidPiece": "Choose the black king.",
+        "invalidDestination": "Make the compulsory capture."
+      }
+    },
+    {
+      "id": "how-games-end-3",
+      "title": "Resignation",
+      "instruction": "White resigns. Classify the result.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 5, "column": 0}, "side": "white", "rank": "man"}
+      ]},
+      "outcome": {"winner": "black", "reason": "resignation"},
+      "interaction": {"type": "choice", "correctOptionId": "black-wins", "options": [
+        {"id": "black-wins", "label": "Black Wins", "icon": "blackChecker", "feedback": "Correct."},
+        {"id": "white-wins", "label": "White Wins", "icon": "whiteChecker", "feedback": "The player who resigns loses the game."},
+        {"id": "draw", "label": "Draw", "icon": "draw", "feedback": "Resignation awards the opponent a win."}
+      ]},
+      "feedback": {
+        "initial": "Resignation ends the game immediately.",
+        "success": "Correct. When White resigns, Black wins."
+      }
+    },
+    {
+      "id": "how-games-end-4",
+      "title": "Three Times",
+      "instruction": "This position has appeared for the third time. Classify the result.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "king"},
+        {"square": {"row": 5, "column": 6}, "side": "white", "rank": "king"}
+      ]},
+      "outcome": {"winner": null, "reason": "repetition"},
+      "interaction": {"type": "choice", "correctOptionId": "draw", "options": [
+        {"id": "black-wins", "label": "Black Wins", "icon": "blackChecker", "feedback": "Repeated positions do not award either side a win."},
+        {"id": "white-wins", "label": "White Wins", "icon": "whiteChecker", "feedback": "Repeated positions do not award either side a win."},
+        {"id": "draw", "label": "Draw", "icon": "draw", "feedback": "Correct."}
+      ]},
+      "feedback": {
+        "initial": "Crown tracks repeated positions and which side is to move.",
+        "success": "Correct. Threefold repetition is a draw."
+      }
+    },
+    {
+      "id": "how-games-end-5",
+      "title": "Quiet Kings",
+      "instruction": "Eighty quiet king turns have passed. Classify the result.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 1, "column": 2}, "side": "black", "rank": "king"},
+        {"square": {"row": 6, "column": 5}, "side": "white", "rank": "king"}
+      ]},
+      "outcome": {"winner": null, "reason": "quietKings"},
+      "interaction": {"type": "choice", "correctOptionId": "draw", "options": [
+        {"id": "black-wins", "label": "Black Wins", "icon": "blackChecker", "feedback": "Neither side wins after eighty quiet king turns."},
+        {"id": "white-wins", "label": "White Wins", "icon": "whiteChecker", "feedback": "Neither side wins after eighty quiet king turns."},
+        {"id": "draw", "label": "Draw", "icon": "draw", "feedback": "Correct."}
+      ]},
+      "feedback": {
+        "initial": "Crown tracks king-only play without captures or man moves.",
+        "success": "Correct. The draw crown means the game ended without a winner."
+      }
+    }
+  ]
+}

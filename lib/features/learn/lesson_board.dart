@@ -13,6 +13,7 @@ import 'learn_curriculum.dart';
 
 class LessonBoard extends StatelessWidget {
   const LessonBoard({
+    required this.curriculum,
     required this.onLessonSelected,
     this.highContrast = false,
     this.lastCompletedLesson = 0,
@@ -21,6 +22,7 @@ class LessonBoard extends StatelessWidget {
   }) : assert(lastCompletedLesson >= 0 && lastCompletedLesson <= 64);
 
   final void Function(LearnUnit unit, LearnLesson lesson) onLessonSelected;
+  final List<LearnUnit> curriculum;
   final bool highContrast;
 
   /// Sequential progress supplied by lesson completion, never by browsing.
@@ -68,7 +70,7 @@ class LessonBoard extends StatelessWidget {
                     policy: OrderedTraversalPolicy(),
                     child: Column(
                       children: [
-                        for (var row = 0; row < learnCurriculum.length; row++)
+                        for (var row = 0; row < curriculum.length; row++)
                           Expanded(
                             child: Row(
                               children: [
@@ -92,7 +94,7 @@ class LessonBoard extends StatelessWidget {
   );
 
   Widget _square(BuildContext context, int row, int column) {
-    final unit = learnCurriculum[row];
+    final unit = curriculum[row];
     final lesson = unit.lessons[column];
     return FocusTraversalOrder(
       order: NumericFocusOrder(lesson.number.toDouble()),

@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 2,
+  "id": "lesson-005",
+  "number": 5,
+  "name": "Becoming a King",
+  "exercises": [
+    {
+      "id": "becoming-a-king-1",
+      "title": "Reach the King Row",
+      "instruction": "Move your checker onto the far edge of the board.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 6, "column": 1}, "side": "black", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "allLegal"},
+      "feedback": {
+        "initial": "A man becomes a king when it reaches the farthest row from where it began.",
+        "selected": "Move onto the far edge.",
+        "success": "Your checker reached the king row and is promoted to a king.",
+        "invalidPiece": "Choose your black checker.",
+        "invalidDestination": "Move diagonally forward onto the king row."
+      }
+    },
+    {
+      "id": "becoming-a-king-2",
+      "title": "White's King Row",
+      "instruction": "Promote the white checker.",
+      "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 1, "column": 2}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "allLegal"},
+      "feedback": {
+        "initial": "Each side has its own king row: the far edge of the board.",
+        "selected": "Move the white checker forward to its final row.",
+        "success": "Correct. White promotes at the opposite edge from black.",
+        "invalidPiece": "Choose the white checker.",
+        "invalidDestination": "Move diagonally forward onto White's king row."
+      }
+    },
+    {
+      "id": "becoming-a-king-3",
+      "title": "Capture into Promotion",
+      "instruction": "Capture the white checker and reach the king row.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 5, "column": 2}, "side": "black", "rank": "man"},
+        {"square": {"row": 6, "column": 3}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 7, "column": 4}], "captures": [{"row": 6, "column": 3}]}
+      ]},
+      "feedback": {
+        "initial": "A man can also reach the king row by capturing.",
+        "selected": "Jump the white checker.",
+        "success": "Correct. Your capturing man landed on the king row and is promoted.",
+        "invalidPiece": "Choose the black checker.",
+        "invalidDestination": "Capture the white checker and land on the far row."
+      }
+    },
+    {
+      "id": "becoming-a-king-4",
+      "title": "Stop for the Crown",
+      "instruction": "Make the compulsory capture.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 5, "column": 2}, "side": "black", "rank": "man"},
+        {"square": {"row": 6, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 5}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 7, "column": 4}], "captures": [{"row": 6, "column": 3}]}
+      ]},
+      "feedback": {
+        "initial": "Watch what happens when a capture reaches the king row.",
+        "selected": "Capture onto the king row.",
+        "success": "Your checker becomes a king, and the turn ends immediately. It does not continue capturing backward as a new king until a later turn.",
+        "invalidPiece": "Choose the black checker with the compulsory capture.",
+        "invalidDestination": "Jump the white checker onto the king row."
+      }
+    },
+    {
+      "id": "becoming-a-king-5",
+      "title": "Capture Comes First",
+      "instruction": "Make the compulsory move.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 6, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 1, "column": 0}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 2, "column": 1}, "landings": [{"row": 4, "column": 3}], "captures": [{"row": 3, "column": 2}]}
+      ], "opponentReply": {"origin": {"row": 1, "column": 0}, "landings": [{"row": 0, "column": 1}], "captures": []}, "opponentPauseMs": 550},
+      "feedback": {
+        "initial": "Your other checker is close to promotion—but remember which rule comes first.",
+        "selected": "Check the whole board before moving.",
+        "awaitingReply": "Good capture. White makes its move.",
+        "success": "Correct. Even when a checker is one move from becoming a king, a compulsory capture elsewhere takes priority.",
+        "invalidPiece": "Another black checker has a compulsory capture.",
+        "invalidDestination": "You must make the available capture before you can pursue promotion."
+      }
+    }
+  ]
+}

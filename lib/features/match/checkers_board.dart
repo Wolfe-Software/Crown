@@ -9,6 +9,8 @@ import 'jump_animation.dart';
 import 'move_hint.dart';
 import 'square_highlight.dart';
 
+typedef PieceDropCallback = void Function(Square origin, Square destination);
+
 class CheckersBoard extends StatelessWidget {
   const CheckersBoard({
     required this.pieces,
@@ -25,6 +27,8 @@ class CheckersBoard extends StatelessWidget {
     this.mandatoryDestinations = const {},
     this.emphasizeRequiredAction = false,
     this.activeJump,
+    this.draggableOrigins = const {},
+    this.onPieceDrop,
     super.key,
   });
 
@@ -44,6 +48,8 @@ class CheckersBoard extends StatelessWidget {
   final Set<Square> mandatoryDestinations;
   final bool emphasizeRequiredAction;
   final JumpAnimation? activeJump;
+  final Set<Square> draggableOrigins;
+  final PieceDropCallback? onPieceDrop;
 
   @override
   Widget build(BuildContext context) => AspectRatio(
@@ -102,163 +108,172 @@ class CheckersBoard extends StatelessWidget {
                                 lastTurn!.captures.contains(square));
                         final label =
                             '${square.notation}. ${piece == null ? 'Empty' : '${piece.side.name} ${piece.rank.name}'}. ${isSelected ? 'Selected.' : ''} ${isDestination ? 'Legal destination.' : ''}';
+                        final squareContent = GestureDetector(
+                          key: ValueKey(
+                            'board-square-${square.row}-${square.column}',
+                          ),
+                          behavior: HitTestBehavior.opaque,
+                          onTap: onSquareTap == null
+                              ? null
+                              : () => onSquareTap!(square),
+                          child: ColoredBox(
+                            color: square.isPlayable
+                                ? (highContrast
+                                      ? CrownColors.obsidian
+                                      : CrownColors.obsidian.withValues(
+                                          alpha: .28,
+                                        ))
+                                : (highContrast
+                                      ? Colors.white
+                                      : Colors.white.withValues(alpha: .12)),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                if (isLastMove)
+                                  Positioned.fill(
+                                    key: ValueKey(
+                                      'last-move-${square.row}-${square.column}',
+                                    ),
+                                    child: const SquareHighlight(),
+                                  ),
+                                if (isMandatoryOrigin)
+                                  FractionallySizedBox(
+                                    key: ValueKey(
+                                      'mandatory-origin-${square.row}-${square.column}',
+                                    ),
+                                    widthFactor: .9,
+                                    heightFactor: .9,
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: CrownColors.paleGold,
+                                          width: 2,
+                                        ),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: CrownColors.gold.withValues(
+                                              alpha: .35,
+                                            ),
+                                            blurRadius: 8,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                if (isMandatoryOrigin &&
+                                    emphasizeRequiredAction)
+                                  FractionallySizedBox(
+                                    key: ValueKey(
+                                      'compelled-origin-${square.row}-${square.column}',
+                                    ),
+                                    widthFactor: .98,
+                                    heightFactor: .98,
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: highContrast
+                                              ? Colors.yellow
+                                              : CrownColors.gold,
+                                          width: 3,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                if (isMandatoryDestination)
+                                  CaptureHint(
+                                    key: ValueKey(
+                                      'mandatory-destination-${square.row}-${square.column}',
+                                    ),
+                                    highContrast: highContrast,
+                                    emphasized: emphasizeRequiredAction,
+                                  ),
+                                if (isMandatoryDestination &&
+                                    emphasizeRequiredAction)
+                                  FractionallySizedBox(
+                                    key: ValueKey(
+                                      'compelled-destination-${square.row}-${square.column}',
+                                    ),
+                                    widthFactor: .62,
+                                    heightFactor: .62,
+                                    child: DecoratedBox(
+                                      decoration: BoxDecoration(
+                                        shape: BoxShape.circle,
+                                        border: Border.all(
+                                          color: highContrast
+                                              ? Colors.yellow
+                                              : CrownColors.paleGold,
+                                          width: 3,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                if (isDestination)
+                                  MoveHint(occupied: piece != null),
+                                if (piece != null)
+                                  FractionallySizedBox(
+                                    widthFactor: .76,
+                                    heightFactor: .76,
+                                    child: _BoardPiece(
+                                      piece: piece,
+                                      square: square,
+                                      selected: isSelected,
+                                      reducedMotion: reducedMotion,
+                                      crownQuarterTurns:
+                                          !ownerFacingCrowns ||
+                                              piece.side == bottomSide
+                                          ? 0
+                                          : 2,
+                                      draggable:
+                                          onPieceDrop != null &&
+                                          draggableOrigins.contains(square),
+                                      feedbackSize:
+                                          constraints.maxWidth / 8 * .76,
+                                    ),
+                                  ),
+                                if (showCoordinates)
+                                  Positioned(
+                                    key: ValueKey(
+                                      'coordinate-${square.row}-${square.column}',
+                                    ),
+                                    left: 3,
+                                    bottom: 1,
+                                    child: Text(
+                                      square.notation,
+                                      style: TextStyle(
+                                        fontSize: 8,
+                                        height: 1,
+                                        fontWeight: highContrast
+                                            ? FontWeight.w800
+                                            : FontWeight.w600,
+                                        color: square.isPlayable
+                                            ? Colors.white
+                                            : CrownColors.ink,
+                                        shadows: const [
+                                          Shadow(
+                                            color: Colors.black45,
+                                            blurRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
                         return Semantics(
                           button: onSquareTap != null,
                           label: label,
-                          child: GestureDetector(
-                            key: ValueKey(
-                              'board-square-${square.row}-${square.column}',
-                            ),
-                            behavior: HitTestBehavior.opaque,
-                            onTap: onSquareTap == null
-                                ? null
-                                : () => onSquareTap!(square),
-                            child: ColoredBox(
-                              color: square.isPlayable
-                                  ? (highContrast
-                                        ? CrownColors.obsidian
-                                        : CrownColors.obsidian.withValues(
-                                            alpha: .28,
-                                          ))
-                                  : (highContrast
-                                        ? Colors.white
-                                        : Colors.white.withValues(alpha: .12)),
-                              child: Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  if (isLastMove)
-                                    Positioned.fill(
-                                      key: ValueKey(
-                                        'last-move-${square.row}-${square.column}',
-                                      ),
-                                      child: const SquareHighlight(),
-                                    ),
-                                  if (isMandatoryOrigin)
-                                    FractionallySizedBox(
-                                      key: ValueKey(
-                                        'mandatory-origin-${square.row}-${square.column}',
-                                      ),
-                                      widthFactor: .9,
-                                      heightFactor: .9,
-                                      child: DecoratedBox(
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: CrownColors.paleGold,
-                                            width: 2,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: CrownColors.gold
-                                                  .withValues(alpha: .35),
-                                              blurRadius: 8,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  if (isMandatoryOrigin &&
-                                      emphasizeRequiredAction)
-                                    FractionallySizedBox(
-                                      key: ValueKey(
-                                        'compelled-origin-${square.row}-${square.column}',
-                                      ),
-                                      widthFactor: .98,
-                                      heightFactor: .98,
-                                      child: DecoratedBox(
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: highContrast
-                                                ? Colors.yellow
-                                                : CrownColors.gold,
-                                            width: 3,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  if (isMandatoryDestination)
-                                    CaptureHint(
-                                      key: ValueKey(
-                                        'mandatory-destination-${square.row}-${square.column}',
-                                      ),
-                                      highContrast: highContrast,
-                                      emphasized: emphasizeRequiredAction,
-                                    ),
-                                  if (isMandatoryDestination &&
-                                      emphasizeRequiredAction)
-                                    FractionallySizedBox(
-                                      key: ValueKey(
-                                        'compelled-destination-${square.row}-${square.column}',
-                                      ),
-                                      widthFactor: .62,
-                                      heightFactor: .62,
-                                      child: DecoratedBox(
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(
-                                            color: highContrast
-                                                ? Colors.yellow
-                                                : CrownColors.paleGold,
-                                            width: 3,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  if (isDestination)
-                                    MoveHint(occupied: piece != null),
-                                  if (piece != null)
-                                    FractionallySizedBox(
-                                      widthFactor: .76,
-                                      heightFactor: .76,
-                                      child: CheckerPiece(
-                                        style: piece.side == Side.black
-                                            ? CheckerPieceStyle.black
-                                            : CheckerPieceStyle.white,
-                                        isKing: piece.rank == PieceRank.king,
-                                        crownQuarterTurns:
-                                            !ownerFacingCrowns ||
-                                                piece.side == bottomSide
-                                            ? 0
-                                            : 2,
-                                        faceKey: ValueKey(
-                                          'piece-face-${square.row}-${square.column}',
-                                        ),
-                                        selected: isSelected,
-                                        reducedMotion: reducedMotion,
-                                      ),
-                                    ),
-                                  if (showCoordinates)
-                                    Positioned(
-                                      key: ValueKey(
-                                        'coordinate-${square.row}-${square.column}',
-                                      ),
-                                      left: 3,
-                                      bottom: 1,
-                                      child: Text(
-                                        square.notation,
-                                        style: TextStyle(
-                                          fontSize: 8,
-                                          height: 1,
-                                          fontWeight: highContrast
-                                              ? FontWeight.w800
-                                              : FontWeight.w600,
-                                          color: square.isPlayable
-                                              ? Colors.white
-                                              : CrownColors.ink,
-                                          shadows: const [
-                                            Shadow(
-                                              color: Colors.black45,
-                                              blurRadius: 2,
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                ],
-                              ),
-                            ),
-                          ),
+                          child: onPieceDrop == null
+                              ? squareContent
+                              : DragTarget<Square>(
+                                  onWillAcceptWithDetails: (_) => true,
+                                  onAcceptWithDetails: (details) =>
+                                      onPieceDrop!(details.data, square),
+                                  builder: (_, _, _) => squareContent,
+                                ),
                         );
                       },
                     ),
@@ -280,6 +295,53 @@ class CheckersBoard extends StatelessWidget {
       ),
     ),
   );
+}
+
+class _BoardPiece extends StatelessWidget {
+  const _BoardPiece({
+    required this.piece,
+    required this.square,
+    required this.selected,
+    required this.reducedMotion,
+    required this.crownQuarterTurns,
+    required this.draggable,
+    required this.feedbackSize,
+  });
+
+  final Piece piece;
+  final Square square;
+  final bool selected;
+  final bool reducedMotion;
+  final int crownQuarterTurns;
+  final bool draggable;
+  final double feedbackSize;
+
+  Widget _checker({Key? key}) => CheckerPiece(
+    key: key,
+    style: piece.side == Side.black
+        ? CheckerPieceStyle.black
+        : CheckerPieceStyle.white,
+    isKing: piece.rank == PieceRank.king,
+    crownQuarterTurns: crownQuarterTurns,
+    faceKey: ValueKey('piece-face-${square.row}-${square.column}'),
+    selected: selected,
+    reducedMotion: reducedMotion,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    if (!draggable) return _checker();
+    return Draggable<Square>(
+      key: ValueKey('draggable-piece-${square.row}-${square.column}'),
+      data: square,
+      feedback: Material(
+        color: Colors.transparent,
+        child: SizedBox.square(dimension: feedbackSize, child: _checker()),
+      ),
+      childWhenDragging: Opacity(opacity: 0, child: _checker()),
+      child: _checker(),
+    );
+  }
 }
 
 class _JumpingPieceOverlay extends StatefulWidget {

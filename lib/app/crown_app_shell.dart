@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 import '../features/history/history_screen.dart';
 import '../features/home/home_screen.dart';
 import '../features/learn/learn_screen.dart';
+import '../features/learn/learn_curriculum.dart';
 import '../features/settings/settings_screen.dart';
 import '../persistence/crown_repository.dart';
 import 'crown_bottom_navigation.dart';
 
 class CrownAppShell extends StatefulWidget {
-  const CrownAppShell({required this.repository, super.key});
+  const CrownAppShell({required this.repository, this.learnCatalog, super.key});
 
   final CrownRepository repository;
+  final LearnCatalog? learnCatalog;
 
   @override
   State<CrownAppShell> createState() => _CrownAppShellState();
@@ -78,6 +80,7 @@ class _CrownAppShellState extends State<CrownAppShell> {
             bottomPadding: bottomPadding,
           ),
           LearnScreen(
+            catalog: widget.learnCatalog,
             bottomPadding: bottomPadding,
             highContrast: _settings.highContrast,
             reducedMotion: _settings.reducedMotion,

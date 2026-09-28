@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/crown_theme.dart';
+import '../../app/crown_wordmark.dart';
 import '../../persistence/crown_repository.dart';
 import 'match_record_row.dart';
 import 'replay_screen.dart';
@@ -41,51 +42,81 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('Feed'),
-      actions: [
-        if (_records.isNotEmpty)
-          IconButton(
-            tooltip: 'Clear history',
-            onPressed: _clear,
-            icon: const Icon(Icons.delete_outline_rounded),
-          ),
-      ],
-    ),
     body: SafeArea(
       top: false,
       bottom: false,
-      child: _records.isEmpty
-          ? const Center(
+      child: CustomScrollView(
+        key: const ValueKey('feed-scroll'),
+        slivers: [
+          SliverAppBar(
+            floating: true,
+            backgroundColor: Colors.transparent,
+            actions: [
+              if (_records.isNotEmpty)
+                IconButton(
+                  tooltip: 'Clear history',
+                  onPressed: _clear,
+                  icon: const Icon(Icons.delete_outline_rounded),
+                ),
+            ],
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+            sliver: SliverToBoxAdapter(
+              child: CrownWordmark(
+                title: 'FEED',
+                logo: Image.asset(
+                  'assets/FeedLogo.png',
+                  key: const ValueKey('feed-header-logo'),
+                  width: 42,
+                  height: 42,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.high,
+                  excludeFromSemantics: true,
+                ),
+              ),
+            ),
+          ),
+          const SliverToBoxAdapter(child: SizedBox(height: 34)),
+          if (_records.isEmpty)
+            SliverFillRemaining(
+              hasScrollBody: false,
               child: Padding(
-                padding: EdgeInsets.all(32),
-                child: GlassPanel(
-                  child: Text(
-                    'Completed matches will appear here, ready to replay.',
+                padding: EdgeInsets.fromLTRB(32, 0, 32, widget.bottomPadding),
+                child: const Center(
+                  child: GlassPanel(
+                    child: Text(
+                      'Completed matches will appear here, ready to replay.',
+                    ),
                   ),
                 ),
               ),
             )
-          : ListView.separated(
-              padding: EdgeInsets.fromLTRB(24, 24, 24, widget.bottomPadding),
-              itemCount: _records.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
-              itemBuilder: (context, index) {
-                final record = _records[index];
-                return MatchRecordRow(
-                  record: record,
-                  onReplay: () => Navigator.push(
-                    context,
-                    MaterialPageRoute<void>(
-                      builder: (_) => ReplayScreen(
-                        record: record,
-                        repository: widget.repository,
+          else
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(24, 0, 24, widget.bottomPadding),
+              sliver: SliverList.separated(
+                itemCount: _records.length,
+                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                itemBuilder: (context, index) {
+                  final record = _records[index];
+                  return MatchRecordRow(
+                    record: record,
+                    onReplay: () => Navigator.push(
+                      context,
+                      MaterialPageRoute<void>(
+                        builder: (_) => ReplayScreen(
+                          record: record,
+                          repository: widget.repository,
+                        ),
                       ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
+        ],
+      ),
     ),
   );
 

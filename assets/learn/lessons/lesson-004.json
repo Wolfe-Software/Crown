@@ -1,0 +1,118 @@
+{
+  "schemaVersion": 2,
+  "id": "lesson-004",
+  "number": 4,
+  "name": "Keep Jumping",
+  "exercises": [
+    {
+      "id": "keep-jumping-1",
+      "title": "Two in a Row",
+      "instruction": "Capture both white pieces in one turn.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 3}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 1, "column": 0}, "landings": [{"row": 3, "column": 2}, {"row": 5, "column": 4}], "captures": [{"row": 2, "column": 1}, {"row": 4, "column": 3}]}
+      ]},
+      "feedback": {
+        "initial": "Sometimes one capture leads directly to another.",
+        "selected": "Make the first jump. If another capture is available, your turn is not over.",
+        "success": "Exactly. After your first capture, you had another available jump, so you had to keep going.",
+        "invalidPiece": "Choose the black checker that can capture.",
+        "invalidDestination": "After a capture, you must continue jumping whenever another capture is available."
+      }
+    },
+    {
+      "id": "keep-jumping-2",
+      "title": "Three Jumps",
+      "instruction": "Follow the capture sequence all the way to the end.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 7, "column": 0}, "side": "black", "rank": "king"},
+        {"square": {"row": 6, "column": 1}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 2, "column": 5}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 7, "column": 0}, "landings": [{"row": 5, "column": 2}, {"row": 3, "column": 4}, {"row": 1, "column": 6}], "captures": [{"row": 6, "column": 1}, {"row": 4, "column": 3}, {"row": 2, "column": 5}]}
+      ]},
+      "feedback": {
+        "initial": "A multiple jump can continue more than once.",
+        "selected": "Keep following the available captures.",
+        "success": "Good. A capture sequence continues until that piece has no further capture available.",
+        "invalidPiece": "Choose the black king.",
+        "invalidDestination": "Keep following the capture sequence. You cannot stop while another jump is available."
+      }
+    },
+    {
+      "id": "keep-jumping-3",
+      "title": "Around the Corner",
+      "instruction": "Complete the capture sequence, even when it changes direction.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 5, "column": 2}, "side": "black", "rank": "king"},
+        {"square": {"row": 4, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 5}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}, {"row": 5, "column": 6}], "captures": [{"row": 4, "column": 3}, {"row": 4, "column": 5}]}
+      ]},
+      "feedback": {
+        "initial": "Multiple jumps do not have to continue in the same direction.",
+        "selected": "Take the first piece, then look again from your new square.",
+        "success": "Right. Each landing creates a new position. If another capture is available from there, you continue.",
+        "invalidPiece": "Choose the black king.",
+        "invalidDestination": "Look for the next capture from the square where your king just landed."
+      }
+    },
+    {
+      "id": "keep-jumping-4",
+      "title": "Choose Your Route",
+      "instruction": "Choose either legal capture sequence.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 5, "column": 2}, "side": "black", "rank": "king"},
+        {"square": {"row": 4, "column": 1}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "white", "rank": "man"},
+        {"square": {"row": 2, "column": 5}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 0}, {"row": 1, "column": 2}], "captures": [{"row": 4, "column": 1}, {"row": 2, "column": 1}]},
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}, {"row": 1, "column": 6}], "captures": [{"row": 4, "column": 3}, {"row": 2, "column": 5}]}
+      ]},
+      "feedback": {
+        "initial": "Sometimes more than one complete capture sequence is available.",
+        "selected": "You may choose the route, but once you begin, you must complete its available jumps.",
+        "success": "Correct. When several captures are available, you may choose among them. You are not required to choose the route that captures the most pieces.",
+        "invalidPiece": "Choose the black king.",
+        "invalidDestination": "Choose one of the available capture routes and continue it until no further jump is available."
+      }
+    },
+    {
+      "id": "keep-jumping-5",
+      "title": "Keep Jumping",
+      "instruction": "Find and complete the legal turn.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 6, "column": 1}, "side": "black", "rank": "king"},
+        {"square": {"row": 5, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 3, "column": 4}, "side": "white", "rank": "man"},
+        {"square": {"row": 1, "column": 4}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 6, "column": 1}, "landings": [{"row": 4, "column": 3}, {"row": 2, "column": 5}, {"row": 0, "column": 3}], "captures": [{"row": 5, "column": 2}, {"row": 3, "column": 4}, {"row": 1, "column": 4}]}
+      ]},
+      "feedback": {
+        "initial": "Put everything together: captures are compulsory, and so are their continuations.",
+        "selected": "Follow the entire sequence.",
+        "success": "Excellent. A multiple jump is one turn, and every available continuation must be completed.",
+        "invalidPiece": "Find the piece with the compulsory capture.",
+        "invalidDestination": "Complete every jump in the capture sequence."
+      }
+    }
+  ]
+}

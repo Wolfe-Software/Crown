@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 3,
+  "type": "guidedMatch",
+  "id": "lesson-008",
+  "number": 8,
+  "name": "Challenge: Your First Game",
+  "startingPosition": "initial",
+  "humanSide": "black",
+  "aiSkill": 0,
+  "completion": "winAndReview",
+  "introduction": "Play a complete game against Crown AI using everything you learned in Unit 1. You are Black, so you move first. Guidance and the Unit 1 rules are always here to help. Win the game, then finish the rules recap to complete the lesson. You can retry after a loss or draw. Leaving a match starts a fresh attempt next time.",
+  "coaching": {
+    "opening": "Black moves first. Select one of your pieces, then move one square diagonally forward onto an empty dark square.",
+    "selected": "Choose a highlighted destination. If several pieces can capture, select the piece you want to use first.",
+    "invalidPiece": "Select one of your pieces that can move. Men move diagonally forward; kings can move in either direction.",
+    "invalidDestination": "Choose an empty highlighted dark square. Men move one diagonal square forward; kings can also move backward. A capture jumps one adjacent opponent into an empty square beyond.",
+    "compulsoryCapture": "A capture is available, so you must take it instead of an ordinary move. Check the whole board. You may choose any legal capture route, regardless of its length or the pieces' ranks.",
+    "continueJump": "Keep jumping with this same piece. Choose a highlighted landing and continue until no further capture is possible. You cannot switch pieces partway through.",
+    "captures": "That jump removed an opposing piece. You can jump a man or a king, but never your own piece. The landing square beyond must be empty, and men capture forward only.",
+    "multipleJumps": "That was a multiple jump: the same piece continued capturing until its route ended. A route may change diagonal direction; men still jump forward only.",
+    "promotion": "A piece reached the far row and became a king. Crowning ends its turn immediately, even if the new king could capture backward. It can use its new powers on its next turn.",
+    "kings": "Kings move one diagonal square forward or backward, and can capture in either direction. They do not fly across the board. Compulsory captures and continued jumps still apply.",
+    "awaitingReply": "Crown AI is choosing a move. Watch its reply, then check the whole board for captures before your next move.",
+    "yourTurn": "Your turn. Look for captures first, then choose a piece and a highlighted destination. Open Unit 1 Rules whenever you need a reminder.",
+    "aiError": "Crown AI could not finish its turn. Your move is safe. Tap Retry AI Turn to continue this game."
+  },
+  "review": [
+    {
+      "concept": "board",
+      "title": "The starting board",
+      "body": "Each side starts with 12 men on the dark squares of its nearest three rows. Only dark squares are used. Black moves first, and the players alternate turns. In this match you played Black."
+    },
+    {
+      "concept": "movement",
+      "title": "Moving your men",
+      "body": "A man moves one square diagonally forward onto an empty dark square. It cannot move straight ahead, sideways, or backward. White and Black move toward opposite ends of the board."
+    },
+    {
+      "concept": "captures",
+      "title": "Making captures",
+      "body": "Jump diagonally over an adjacent opposing piece into the empty square immediately beyond it, then remove that opponent. Men capture forward only. A blocked landing prevents the jump. You cannot jump your own pieces, and an opposing king is captured just like a man."
+    },
+    {
+      "concept": "compulsoryCapture",
+      "title": "Capture is compulsory",
+      "body": "Check the entire board before moving. If any of your pieces can capture, you must capture, even if an ordinary move would promote another piece or the capture seems unwise. When several routes are legal, choose any one: you do not have to take the most pieces, and kings have no capture priority."
+    },
+    {
+      "concept": "multipleJumps",
+      "title": "Keep jumping",
+      "body": "After a capture, keep jumping with that same piece while another legal capture is available. Choose each landing in turn. You may change diagonal direction and choose between branches, but cannot stop early or switch pieces. Men still capture forward only."
+    },
+    {
+      "concept": "promotion",
+      "title": "Becoming a king",
+      "body": "A man becomes a king when it reaches the farthest row, whether by an ordinary move or a capture. Crowning immediately ends that turn. A newly crowned king cannot continue jumping backward until its next turn. This rule applies to both colors."
+    },
+    {
+      "concept": "kings",
+      "title": "Moving with kings",
+      "body": "A king can move one square diagonally in any of the four directions. It can capture forward or backward and change direction during a multiple jump. Kings do not fly across several empty squares. They must capture when a capture is available and complete their chosen capture sequence."
+    },
+    {
+      "concept": "winning",
+      "title": "Two ways to win on the board",
+      "body": "You win when your opponent has no pieces left or, when it is their turn, has no legal move. Blocking the remaining pieces can win just as surely as capturing them. This lesson requires a win and this recap; a loss or draw is an opportunity to try again."
+    },
+    {
+      "concept": "resignation",
+      "title": "Resigning a game",
+      "body": "A player may resign to concede the game. The other player wins immediately. Resigning this challenge ends the attempt without completing the lesson; you can start a fresh game and try again."
+    },
+    {
+      "concept": "repetition",
+      "title": "Threefold repetition",
+      "body": "The game is drawn when the same position occurs three times with the same player to move. The pieces, their ranks, and whose turn it is must match. The occurrences need not be consecutive. Crown tracks this automatically."
+    },
+    {
+      "concept": "quietKings",
+      "title": "80 quiet king turns",
+      "body": "Crown declares a draw after 80 consecutive individual turns consisting only of non-capturing king moves—40 turns per side. Any capture or move by a man resets that count. A drawn challenge can be retried. You have now reviewed all of Unit 1: complete the lesson when you are ready."
+    }
+  ]
+}

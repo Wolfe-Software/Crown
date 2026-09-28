@@ -9,9 +9,12 @@ import '../../app/crown_bottom_modal.dart';
 import '../../game_engine/checkers_engine.dart';
 import '../../persistence/crown_repository.dart';
 import 'checkers_board.dart';
+import 'game_result_summary.dart';
 import 'match_controller.dart';
+import 'match_result_sheet.dart';
 import 'move_audio.dart';
 import 'player_strip.dart';
+import 'singleplayer_match_layout.dart';
 
 class MatchScreen extends StatefulWidget {
   const MatchScreen({
@@ -107,43 +110,20 @@ class _MatchScreenState extends State<MatchScreen> {
       await _showLocalResult(result);
       return;
     }
-    final outcome = result.outcomeFor(controller.session.perspectiveSide);
-    final title = _outcomeTitle(outcome);
     await showCrownBottomModal<void>(
       context: context,
       reducedMotion:
           _settings.reducedMotion || MediaQuery.disableAnimationsOf(context),
       dismissible: false,
-      builder: (sheetContext) => CrownBottomSheet(
+      builder: (sheetContext) => MatchResultSheet(
         key: const ValueKey('result-sheet'),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const CrownSheetHandle(),
-            const SizedBox(height: 24),
-            CrownIcon(
-              variant: switch (outcome) {
-                PerspectiveOutcome.victory => CrownIconVariant.normal,
-                PerspectiveOutcome.defeat => CrownIconVariant.broken,
-                PerspectiveOutcome.draw => CrownIconVariant.draw,
-              },
-              size: 44,
-              semanticLabel: title,
-            ),
-            const SizedBox(height: 14),
-            Text(title, style: Theme.of(context).textTheme.headlineMedium),
-            const SizedBox(height: 8),
-            Text(_reasonText(result.reason)),
-            const SizedBox(height: 24),
-            GoldButton(
-              label: 'RETURN HOME',
-              onPressed: () {
-                Navigator.pop(sheetContext);
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        ),
+        result: result,
+        perspective: controller.session.perspectiveSide,
+        actionLabel: 'RETURN HOME',
+        onAction: () {
+          Navigator.pop(sheetContext);
+          Navigator.pop(context);
+        },
       ),
     );
   }
@@ -284,79 +264,61 @@ class _MatchScreenState extends State<MatchScreen> {
         }
       },
       child: Scaffold(
-        appBar: isLocal
-            ? null
-            : AppBar(
-                title: Column(
-                  children: [
-                    const Text(
-                      'CROWN',
-                      style: TextStyle(letterSpacing: 4, fontSize: 19),
-                    ),
-                    Text(
-                      '• CHECKERS •',
-                      style: Theme.of(context).textTheme.labelLarge
-                          ?.copyWith(color: CrownColors.gold, fontSize: 9),
-                    ),
-                  ],
-                ),
-                automaticallyImplyLeading: false,
-              ),
-        body: SafeArea(
-          top: false,
-          bottom: false,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final padding = MediaQuery.paddingOf(context);
-              final symmetricInset = padding.top > padding.bottom
-                  ? padding.top
-                  : padding.bottom;
-              var boardSize = widthBoardMax;
-              if (isLocal) {
-                final availableHeight =
-                    constraints.maxHeight - (symmetricInset * 2) - 292;
-                final minimumBoard = widthBoardMax < 180
-                    ? widthBoardMax
-                    : 180.0;
-                boardSize = availableHeight.clamp(minimumBoard, widthBoardMax);
-              } else {
-                // Reserve space for both player strips and the human controls.
-                final availableHeight = constraints.maxHeight - 240;
-                final minimumBoard = widthBoardMax < 180
-                    ? widthBoardMax
-                    : 180.0;
-                boardSize = availableHeight.clamp(minimumBoard, widthBoardMax);
-              }
-              final board = SizedBox.square(
-                dimension: boardSize,
-                child: CheckersBoard(
-                  pieces: controller.displayPieces,
-                  selected: controller.selectedSquare,
-                  destinations: controller.legalDestinations,
-                  showCoordinates: _settings.showCoordinates,
-                  highContrast: _settings.highContrast,
-                  reducedMotion: _settings.reducedMotion,
-                  bottomSide: bottomSide,
-                  ownerFacingCrowns: isLocal,
-                  lastTurn: state.turns.isEmpty ? null : state.turns.last,
-                  mandatoryOrigins: controller.mandatoryOrigins,
-                  mandatoryDestinations: controller.mandatoryDestinations,
-                  emphasizeRequiredAction: controller.hasSingleRequiredAction,
-                  activeJump: controller.activeJump,
-                  onSquareTap: controller.tapSquare,
-                ),
-              );
-              final children = isLocal
-                  ? _localMatchChildren(
-                      context: context,
-                      state: state,
-                      topSide: topSide,
-                      bottomSide: bottomSide,
-                      statusTitle: statusTitle,
-                      statusDetail: statusDetail,
-                      board: board,
-                    )
-                  : _aiMatchChildren(
+        appBar: isLocal ? null : const SingleplayerMatchHeader(),
+        body: !isLocal
+            ? SingleplayerMatchLayout(
+                controller: controller,
+                showCoordinates: _settings.showCoordinates,
+                highContrast: _settings.highContrast,
+                reducedMotion:
+                    _settings.reducedMotion ||
+                    MediaQuery.disableAnimationsOf(context),
+                onSquareTap: controller.tapSquare,
+                onLeave: () async {
+                  if (await _leave() && context.mounted) Navigator.pop(context);
+                },
+                onHistory: () => _showMoves(),
+                onResign: () => _confirmResign(),
+              )
+            : SafeArea(
+                top: false,
+                bottom: false,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final padding = MediaQuery.paddingOf(context);
+                    final symmetricInset = padding.top > padding.bottom
+                        ? padding.top
+                        : padding.bottom;
+                    final availableHeight =
+                        constraints.maxHeight - (symmetricInset * 2) - 292;
+                    final minimumBoard = widthBoardMax < 180
+                        ? widthBoardMax
+                        : 180.0;
+                    final boardSize = availableHeight.clamp(
+                      minimumBoard,
+                      widthBoardMax,
+                    );
+                    final board = SizedBox.square(
+                      dimension: boardSize,
+                      child: CheckersBoard(
+                        pieces: controller.displayPieces,
+                        selected: controller.selectedSquare,
+                        destinations: controller.legalDestinations,
+                        showCoordinates: _settings.showCoordinates,
+                        highContrast: _settings.highContrast,
+                        reducedMotion: _settings.reducedMotion,
+                        bottomSide: bottomSide,
+                        ownerFacingCrowns: isLocal,
+                        lastTurn: state.turns.isEmpty ? null : state.turns.last,
+                        mandatoryOrigins: controller.mandatoryOrigins,
+                        mandatoryDestinations: controller.mandatoryDestinations,
+                        emphasizeRequiredAction:
+                            controller.hasSingleRequiredAction,
+                        activeJump: controller.activeJump,
+                        onSquareTap: controller.tapSquare,
+                      ),
+                    );
+                    final children = _localMatchChildren(
                       context: context,
                       state: state,
                       topSide: topSide,
@@ -365,38 +327,33 @@ class _MatchScreenState extends State<MatchScreen> {
                       statusDetail: statusDetail,
                       board: board,
                     );
-              final verticalPadding = isLocal ? symmetricInset + 8 : 8.0;
-              if (isLocal) {
-                _scheduleLocalBoardCenter(constraints.biggest);
-              }
-              return SingleChildScrollView(
-                controller: isLocal ? _localScrollController : null,
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  verticalPadding,
-                  16,
-                  isLocal ? verticalPadding : 28,
+                    final verticalPadding = symmetricInset + 8;
+                    _scheduleLocalBoardCenter(constraints.biggest);
+                    return SingleChildScrollView(
+                      controller: _localScrollController,
+                      padding: EdgeInsets.fromLTRB(
+                        16,
+                        verticalPadding,
+                        16,
+                        verticalPadding,
+                      ),
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: 620,
+                            minHeight:
+                                constraints.maxHeight - (verticalPadding * 2),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: children,
+                          ),
+                        ),
+                      ),
+                    );
+                  },
                 ),
-                child: Center(
-                  child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: 620,
-                      minHeight: isLocal
-                          ? constraints.maxHeight - (verticalPadding * 2)
-                          : 0,
-                    ),
-                    child: Column(
-                      mainAxisAlignment: isLocal
-                          ? MainAxisAlignment.center
-                          : MainAxisAlignment.start,
-                      children: children,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
+              ),
       ),
     );
   }
@@ -456,49 +413,6 @@ class _MatchScreenState extends State<MatchScreen> {
         onHistory: () => _showMoves(),
         onResign: () => _confirmResign(side: bottomSide),
       ),
-    ),
-  ];
-
-  List<Widget> _aiMatchChildren({
-    required BuildContext context,
-    required GameState state,
-    required Side topSide,
-    required Side bottomSide,
-    required String statusTitle,
-    required String statusDetail,
-    required Widget board,
-  }) => [
-    PlayerStrip(
-      name: _nameForSide(topSide),
-      side: topSide,
-      isCrownAi: controller.session.aiSide == topSide,
-      active: state.sideToMove == topSide,
-      pieces: state.pieces.values
-          .where((piece) => piece.side == topSide)
-          .length,
-    ),
-    const SizedBox(height: 12),
-    board,
-    const SizedBox(height: 12),
-    PlayerStrip(
-      name: _nameForSide(bottomSide),
-      side: bottomSide,
-      isCrownAi: controller.session.aiSide == bottomSide,
-      active: state.sideToMove == bottomSide,
-      pieces: state.pieces.values
-          .where((piece) => piece.side == bottomSide)
-          .length,
-    ),
-    const SizedBox(height: 8),
-    _MatchActionRow(
-      seat: 'human',
-      statusTitle: statusTitle,
-      statusDetail: statusDetail,
-      onLeave: () async {
-        if (await _leave() && context.mounted) Navigator.pop(context);
-      },
-      onHistory: () => _showMoves(),
-      onResign: () => _confirmResign(),
     ),
   ];
 
@@ -661,7 +575,7 @@ class _LocalPlayerHud extends StatelessWidget {
         pieces: pieces,
       ),
       const SizedBox(height: 8),
-      _MatchActionRow(
+      MatchActionRow(
         seat: seat,
         statusTitle: statusTitle,
         statusDetail: statusDetail,
@@ -670,72 +584,6 @@ class _LocalPlayerHud extends StatelessWidget {
         onResign: onResign,
       ),
     ],
-  );
-}
-
-class _MatchActionRow extends StatelessWidget {
-  const _MatchActionRow({
-    required this.seat,
-    required this.statusTitle,
-    required this.statusDetail,
-    required this.onLeave,
-    required this.onHistory,
-    required this.onResign,
-  });
-
-  final String seat;
-  final String statusTitle;
-  final String statusDetail;
-  final VoidCallback onLeave;
-  final VoidCallback onHistory;
-  final VoidCallback onResign;
-
-  @override
-  Widget build(BuildContext context) => GlassPanel(
-    padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 6),
-    child: Row(
-      children: [
-        IconButton(
-          key: ValueKey('$seat-leave'),
-          tooltip: 'Leave match',
-          onPressed: onLeave,
-          icon: const Icon(Icons.arrow_back_rounded),
-        ),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                statusTitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.labelLarge
-                    ?.copyWith(color: CrownColors.gold),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                statusDetail,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-          ),
-        ),
-        IconButton(
-          key: ValueKey('$seat-history'),
-          tooltip: 'Move history',
-          onPressed: onHistory,
-          icon: const Icon(Icons.format_list_numbered_rounded),
-        ),
-        IconButton(
-          key: ValueKey('$seat-resign'),
-          tooltip: 'Resign',
-          onPressed: onResign,
-          icon: const Icon(Icons.flag_outlined),
-        ),
-      ],
-    ),
   );
 }
 
@@ -753,41 +601,13 @@ class _LocalResultSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final outcome = result.outcomeFor(side);
-    final title = _outcomeTitle(outcome);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        CrownIcon(
-          variant: switch (outcome) {
-            PerspectiveOutcome.victory => CrownIconVariant.normal,
-            PerspectiveOutcome.defeat => CrownIconVariant.broken,
-            PerspectiveOutcome.draw => CrownIconVariant.draw,
-          },
-          size: 38,
-          semanticLabel: title,
-        ),
-        const SizedBox(height: 8),
-        Text(title, style: Theme.of(context).textTheme.headlineMedium),
-        const SizedBox(height: 4),
-        Text(_reasonText(result.reason), textAlign: TextAlign.center),
+        GameResultSummary(result: result, perspective: side),
         const SizedBox(height: 12),
         GoldButton(label: 'RETURN HOME', onPressed: onReturnHome),
       ],
     );
   }
 }
-
-String _reasonText(ResultReason reason) => switch (reason) {
-  ResultReason.noPieces => 'The final opposing piece was captured.',
-  ResultReason.noLegalMove => 'No legal move remained.',
-  ResultReason.repetition => 'The same position occurred three times.',
-  ResultReason.quietKings => 'Eighty quiet king turns were completed.',
-  ResultReason.resignation => 'The match ended by resignation.',
-};
-
-String _outcomeTitle(PerspectiveOutcome outcome) => switch (outcome) {
-  PerspectiveOutcome.victory => 'Victory',
-  PerspectiveOutcome.defeat => 'Defeat',
-  PerspectiveOutcome.draw => 'Draw',
-};

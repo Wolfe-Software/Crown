@@ -1,10 +1,16 @@
 import 'package:crown/features/learn/learn_curriculum.dart';
+import 'package:crown/features/learn/lesson_asset_loader.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   test(
     'curriculum has eight ordered units and 64 complete, consecutive lessons',
-    () {
+    () async {
+      final learnCurriculum = (await LessonAssetLoader().loadCatalog(
+        'assets/learn/catalog.json',
+      )).units;
       expect(learnCurriculum, hasLength(8));
       final numbers = <int>[];
       for (var row = 0; row < 8; row++) {
@@ -24,7 +30,35 @@ void main() {
         }
       }
       expect(numbers.toSet(), hasLength(64));
+      final lessons = learnCurriculum.expand((unit) => unit.lessons).toList();
+      expect(lessons.map((lesson) => lesson.id).toSet(), hasLength(64));
+      expect(
+        lessons
+            .where((lesson) => lesson.definitionAsset != null)
+            .map((lesson) => lesson.number),
+        [1, 2, 3, 4, 5, 6, 7, 8],
+      );
+      expect(
+        lessons.where((lesson) => lesson.status == LessonStatus.available),
+        everyElement(
+          isA<LearnLesson>().having(
+            (lesson) => lesson.definitionAsset,
+            'definitionAsset',
+            isNotNull,
+          ),
+        ),
+      );
       expect(learnCurriculum.first.lessons.first.name, 'Meet the Board');
+      expect(learnCurriculum.first.lessons[1].name, 'Making Captures');
+      expect(learnCurriculum.first.lessons[2].name, 'Capture Is Compulsory');
+      expect(
+        learnCurriculum.first.lessons[2].contentAndExercise,
+        contains('free choice among legal single captures'),
+      );
+      expect(
+        learnCurriculum.first.lessons[2].contentAndExercise,
+        isNot(contains('blocked jumps')),
+      );
       expect(learnCurriculum[2].lessons[2].name, 'Build a Multiple Jump');
       expect(
         learnCurriculum.last.lessons.last.name,

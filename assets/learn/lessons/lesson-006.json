@@ -1,0 +1,108 @@
+{
+  "schemaVersion": 2,
+  "id": "lesson-006",
+  "number": 6,
+  "name": "Moving with Kings",
+  "exercises": [
+    {
+      "id": "moving-with-kings-1",
+      "title": "Backwards",
+      "instruction": "Move the king backward.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 7, "column": 2}, "side": "black", "rank": "king"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 7, "column": 2}, "landings": [{"row": 6, "column": 1}], "captures": []},
+        {"origin": {"row": 7, "column": 2}, "landings": [{"row": 6, "column": 3}], "captures": []}
+      ]},
+      "feedback": {
+        "initial": "Unlike men, kings can move both forward and backward.",
+        "selected": "Choose either backward diagonal.",
+        "success": "Correct. Kings can move one diagonal square backward.",
+        "invalidPiece": "Choose the black king.",
+        "invalidDestination": "Move one square diagonally backward."
+      }
+    },
+    {
+      "id": "moving-with-kings-2",
+      "title": "Four Directions",
+      "instruction": "Make any legal move with the king.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 3, "column": 4}, "side": "black", "rank": "king"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "allLegal"},
+      "feedback": {
+        "initial": "From the middle of an open board, a king can move diagonally in four directions.",
+        "selected": "Choose any adjacent diagonal square.",
+        "success": "Right. A king moves one square diagonally, either forward or backward.",
+        "invalidPiece": "Choose the king.",
+        "invalidDestination": "Kings still move diagonally one square at a time."
+      }
+    },
+    {
+      "id": "moving-with-kings-3",
+      "title": "Capture Backward",
+      "instruction": "Use the king to capture backward.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 3, "column": 2}, "side": "black", "rank": "king"},
+        {"square": {"row": 2, "column": 3}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 3, "column": 2}, "landings": [{"row": 1, "column": 4}], "captures": [{"row": 2, "column": 3}]}
+      ]},
+      "feedback": {
+        "initial": "Kings can capture backward as well as move backward.",
+        "selected": "Jump over the white checker.",
+        "success": "Correct. A king can capture in any diagonal direction.",
+        "invalidPiece": "Choose the black king.",
+        "invalidDestination": "Jump diagonally backward over the white checker."
+      }
+    },
+    {
+      "id": "moving-with-kings-4",
+      "title": "Turn Around",
+      "instruction": "Complete the king's entire capture sequence.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 5, "column": 2}, "side": "black", "rank": "king"},
+        {"square": {"row": 4, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 5}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}, {"row": 5, "column": 6}], "captures": [{"row": 4, "column": 3}, {"row": 4, "column": 5}]}
+      ]},
+      "feedback": {
+        "initial": "A king can change between forward and backward captures during the same multiple jump.",
+        "selected": "After the first jump, look in every diagonal direction.",
+        "success": "Exactly. Kings can combine forward and backward jumps in one capture sequence.",
+        "invalidPiece": "Choose the black king.",
+        "invalidDestination": "Follow every available capture, including backward captures."
+      }
+    },
+    {
+      "id": "moving-with-kings-5",
+      "title": "King's Choice",
+      "instruction": "Make any legal capture.",
+      "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 3, "column": 4}, "side": "black", "rank": "king"},
+        {"square": {"row": 2, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 5}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 3, "column": 4}, "landings": [{"row": 1, "column": 2}], "captures": [{"row": 2, "column": 3}]},
+        {"origin": {"row": 3, "column": 4}, "landings": [{"row": 5, "column": 6}], "captures": [{"row": 4, "column": 5}]}
+      ]},
+      "feedback": {
+        "initial": "This king has captures in both directions.",
+        "selected": "Choose either legal capture.",
+        "success": "Correct. A king can capture forward or backward, and either capture is legal here.",
+        "invalidPiece": "Choose the black king.",
+        "invalidDestination": "A capture is compulsory. Choose one of the two available jumps."
+      }
+    }
+  ]
+}

@@ -26,6 +26,45 @@ flutter run
 
 No Firebase project or network service is required.
 
+## Learn Lessons
+
+`assets/learn/catalog.json` is the sole curriculum source. It contains all 64
+lesson records and marks each lesson as `planned` or `available`. Available
+records reference a versioned definition under `assets/learn/lessons/`; planned
+records must not expose an executable definition.
+
+Schema-v2 lesson definitions contain all lesson-specific text, board positions,
+perspective, accepted actions, feedback, optional outcomes, and optional
+opponent replies. The supported board sources are `initial`,
+`initialWithRemovedPieces`, `custom`, and `previousExerciseResult`. The
+supported interactions are `placement`, `turn`, and `choice`; turns either
+accept `allLegal` engine moves or an `exactLegalSet` of authored moves, while
+choices identify one correct option and provide feedback for every answer.
+Choice options may declare `blackChecker`, `whiteChecker`, or `draw` icons for
+visual answer cards. Squares use the engine's `{row, column}` JSON
+representation. Authored turn outcomes are validated against `CheckersEngine`,
+and all outcome indicators use the same bottom-sheet result presentation as
+matches.
+
+`LessonAssetLoader` parses the assets and validates authored positions and
+turns against `CheckersEngine`. Every available lesson then runs through the
+same `LessonSessionController`, `LessonScreen`, and
+`LessonExerciseScaffold`. Do not add lesson-specific controllers, screens, or
+routing branches.
+
+Completed exercises remain visible until the player chooses `CONTINUE`.
+Completed final exercises remain visible until the player chooses
+`COMPLETE LESSON`. Player turns use the same tap flow as a match: every landing
+in a multiple jump requires its own tap. Authored opponent actions may run
+automatically within an exercise, but timers must not advance to another
+exercise or complete a lesson. The generic screen passes accessibility
+settings to the board and its widget tests use
+`expectStandardLessonPresentation`.
+
+Validate every authored board fixture against the production rules engine and
+test every accepted solution branch before changing a lesson to `available`.
+Adding a lesson should require JSON and data-driven tests only.
+
 ## Move Audio
 
 `assets/move.wav` is a processed, real recording of a wooden board-game piece
@@ -45,17 +84,36 @@ as a development-only listening reference.
 
 ## App Icon
 
-`assets/AppIcon.png` is the original icon artwork. The generator crops inside
-the marble tile and upscales that full-bleed artwork to an opaque square.
-Android uses no additional adaptive-icon inset. Regenerate the master and all
-native launcher assets with:
+`assets/AppIcon.png` is the original icon artwork. Android uses an opaque,
+full-bleed crop with no additional adaptive-icon inset. Regenerate that master,
+the runtime logo assets, and the source layers for Apple's Icon Composer with:
 
 ```sh
 dart run tool/generate_app_icon.dart
+cp assets/generated/app_icon/DefaultIcon.png ios/Runner/AppIcon.icon/Assets/
+cp assets/generated/app_icon/MarbleTexture.png ios/Runner/AppIcon.icon/Assets/
+cp assets/generated/app_icon/CrownForeground.png ios/Runner/AppIcon.icon/Assets/
 dart run flutter_launcher_icons
 ```
 
-Generated iOS and Android icon files should not be edited manually.
+`flutter_launcher_icons` manages Android only. The canonical iOS and iPadOS
+icon is `ios/Runner/AppIcon.icon`, authored with Icon Composer from Xcode 26 or
+later. It provides separate default, dark, monochrome, clear, and tinted
+renderings; Xcode generates fallback resources when building for iOS 15-25.
+Marble appears only in the default rendering. Dark uses Apple's standard
+system-dark background, while clear and tinted backgrounds are generated
+dynamically from the system appearance and the user's selected tint.
+Open that document in Icon Composer after replacing a layer to review every
+appearance before committing the complete `.icon` package. Do not restore an
+`AppIcon.appiconset` beside it because the two sources conflict.
+
+The generated Icon Composer sources are `DefaultIcon.png`, the original
+flattened default artwork; `MarbleTexture.png`, a neutral alpha texture that can
+be recolored for each appearance; `CrownForeground.png`, the gold crown without
+marble or cast shadow; and `CrownMask.png`, the matching monochrome silhouette
+used to verify clear and tinted artwork. The `.icon` document embeds the first
+three files, so rerun the three `cp` commands whenever the generated layers
+change.
 
 The same generator creates `assets/CrownLogo.png`, a transparent `1024x1024`
 asset containing the crown at exactly the same scale and position as the app

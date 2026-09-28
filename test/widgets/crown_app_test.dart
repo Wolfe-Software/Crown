@@ -6,6 +6,8 @@ import 'package:crown/app/crown_bottom_modal.dart';
 import 'package:crown/app/crown_icon.dart';
 import 'package:crown/app/crown_theme.dart';
 import 'package:crown/features/home/local_color_picker.dart';
+import 'package:crown/features/learn/learn_curriculum.dart';
+import 'package:crown/features/learn/lesson_asset_loader.dart';
 import 'package:crown/features/learn/lesson_board.dart';
 import 'package:crown/features/match/checker_piece.dart';
 import 'package:crown/features/match/checkers_board.dart';
@@ -19,12 +21,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  late LearnCatalog learnCatalog;
+
+  setUpAll(() async {
+    learnCatalog = await LessonAssetLoader().loadCatalog(
+      'assets/learn/catalog.json',
+    );
+  });
+
   testWidgets('app shell restores persisted learn progress', (tester) async {
     final repository = MemoryCrownRepository();
     await repository.saveLearnProgress(
       const LearnProgress(lastCompletedLesson: 1),
     );
-    await tester.pumpWidget(CrownApp(repository: repository));
+    await tester.pumpWidget(
+      CrownApp(repository: repository, learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Learn'));
@@ -173,11 +186,16 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(tester.getRect(find.byType(ListView)).bottom, 600);
+    expect(
+      tester.getRect(find.byKey(const ValueKey('profile-scroll'))).bottom,
+      600,
+    );
   });
 
   testWidgets('home exposes both offline play modes', (tester) async {
-    await tester.pumpWidget(CrownApp(repository: MemoryCrownRepository()));
+    await tester.pumpWidget(
+      CrownApp(repository: MemoryCrownRepository(), learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('Play'), findsOneWidget);
@@ -207,7 +225,9 @@ void main() {
   testWidgets('local multiplayer uses overlapping opposite-color checkers', (
     tester,
   ) async {
-    await tester.pumpWidget(CrownApp(repository: MemoryCrownRepository()));
+    await tester.pumpWidget(
+      CrownApp(repository: MemoryCrownRepository(), learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     final badge = find.byKey(const ValueKey('multiplayer-icon-badge'));
@@ -249,7 +269,9 @@ void main() {
   testWidgets('bottom navigation switches between all four destinations', (
     tester,
   ) async {
-    await tester.pumpWidget(CrownApp(repository: MemoryCrownRepository()));
+    await tester.pumpWidget(
+      CrownApp(repository: MemoryCrownRepository(), learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Learn'));
@@ -275,7 +297,9 @@ void main() {
   testWidgets('bottom navigation uses a clipped blurred glass surface', (
     tester,
   ) async {
-    await tester.pumpWidget(CrownApp(repository: MemoryCrownRepository()));
+    await tester.pumpWidget(
+      CrownApp(repository: MemoryCrownRepository(), learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     final blur = tester.widget<BackdropFilter>(
@@ -299,7 +323,9 @@ void main() {
   testWidgets('compact Play button keeps a bright yellow-gold finish', (
     tester,
   ) async {
-    await tester.pumpWidget(CrownApp(repository: MemoryCrownRepository()));
+    await tester.pumpWidget(
+      CrownApp(repository: MemoryCrownRepository(), learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     expect(find.widgetWithText(FilledButton, 'PLAY'), findsOneWidget);
@@ -316,7 +342,9 @@ void main() {
   testWidgets('bottom navigation uses image assets and color-only selection', (
     tester,
   ) async {
-    await tester.pumpWidget(CrownApp(repository: MemoryCrownRepository()));
+    await tester.pumpWidget(
+      CrownApp(repository: MemoryCrownRepository(), learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     final navigation = find.byKey(const ValueKey('crown-bottom-nav'));
@@ -432,7 +460,9 @@ void main() {
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    await tester.pumpWidget(CrownApp(repository: MemoryCrownRepository()));
+    await tester.pumpWidget(
+      CrownApp(repository: MemoryCrownRepository(), learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     final play = tester.getSemantics(find.bySemanticsLabel('Play'));
@@ -450,7 +480,9 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(CrownApp(repository: MemoryCrownRepository()));
+    await tester.pumpWidget(
+      CrownApp(repository: MemoryCrownRepository(), learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     final homeLogo = find.byWidgetPredicate(
@@ -490,6 +522,62 @@ void main() {
     semantics.dispose();
   });
 
+  testWidgets('Feed and Profile wordmarks align with the Home wordmark', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      CrownApp(repository: MemoryCrownRepository(), learnCatalog: learnCatalog),
+    );
+    await tester.pumpAndSettle();
+
+    final homeLogo = find.byWidgetPredicate(
+      (widget) =>
+          widget is CrownIcon &&
+          widget.semanticLabel == 'Crown' &&
+          widget.size == 42,
+    );
+    final homeLogoRect = tester.getRect(homeLogo);
+    final homeTitleRect = tester.getRect(find.text('CROWN'));
+
+    for (final destination in [
+      (
+        navigationLabel: 'Feed',
+        title: 'FEED',
+        logoKey: const ValueKey('feed-header-logo'),
+        assetName: 'assets/FeedLogo.png',
+      ),
+      (
+        navigationLabel: 'Profile',
+        title: 'PROFILE',
+        logoKey: const ValueKey('profile-header-logo'),
+        assetName: 'assets/ProfileLogo.png',
+      ),
+    ]) {
+      await tester.tap(find.text(destination.navigationLabel));
+      await tester.pumpAndSettle();
+
+      final logo = find.byKey(destination.logoKey);
+      final title = find.text(destination.title);
+      expect(logo, findsOneWidget);
+      expect(
+        (tester.widget<Image>(logo).image as AssetImage).assetName,
+        destination.assetName,
+      );
+      expect(tester.getSize(logo), const Size.square(42));
+      expect(tester.getRect(logo).topLeft, homeLogoRect.topLeft);
+      expect(tester.getRect(title).top, homeTitleRect.top);
+      expect(tester.getCenter(title).dx, homeTitleRect.center.dx);
+      expect(
+        tester.widget<Text>(title).style,
+        Theme.of(tester.element(title)).textTheme.displayLarge,
+      );
+    }
+  });
+
   testWidgets('jeweled AI card artwork fits a compact phone width', (
     tester,
   ) async {
@@ -497,7 +585,9 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(CrownApp(repository: MemoryCrownRepository()));
+    await tester.pumpWidget(
+      CrownApp(repository: MemoryCrownRepository(), learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     final jeweledCrown = find.byWidgetPredicate(
@@ -548,7 +638,9 @@ void main() {
         ),
       );
       await repository.addHistory(MatchRecord.fromSession(completed));
-      await tester.pumpWidget(CrownApp(repository: repository));
+      await tester.pumpWidget(
+        CrownApp(repository: repository, learnCatalog: learnCatalog),
+      );
       await tester.pumpAndSettle();
       expect(find.text(scenario.row), findsNothing);
       await tester.tap(find.text('Feed'));
@@ -571,7 +663,9 @@ void main() {
     tester,
   ) async {
     final repository = MemoryCrownRepository();
-    await tester.pumpWidget(CrownApp(repository: repository));
+    await tester.pumpWidget(
+      CrownApp(repository: repository, learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Feed'));
@@ -809,7 +903,9 @@ void main() {
   });
 
   testWidgets('local multiplayer opens a complete board', (tester) async {
-    await tester.pumpWidget(CrownApp(repository: MemoryCrownRepository()));
+    await tester.pumpWidget(
+      CrownApp(repository: MemoryCrownRepository(), learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Local Multiplayer'));
@@ -841,7 +937,9 @@ void main() {
   testWidgets('singleplayer opens the same picker with player copy', (
     tester,
   ) async {
-    await tester.pumpWidget(CrownApp(repository: MemoryCrownRepository()));
+    await tester.pumpWidget(
+      CrownApp(repository: MemoryCrownRepository(), learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Play Crown AI'));
@@ -885,7 +983,9 @@ void main() {
     tester,
   ) async {
     final repository = MemoryCrownRepository();
-    await tester.pumpWidget(CrownApp(repository: repository));
+    await tester.pumpWidget(
+      CrownApp(repository: repository, learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Local Multiplayer'));
@@ -1335,7 +1435,9 @@ void main() {
 
   testWidgets('settings changes are persisted', (tester) async {
     final repository = MemoryCrownRepository();
-    await tester.pumpWidget(CrownApp(repository: repository));
+    await tester.pumpWidget(
+      CrownApp(repository: repository, learnCatalog: learnCatalog),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Profile'));
