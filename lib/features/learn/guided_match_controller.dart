@@ -14,6 +14,7 @@ class GuidedMatchController extends ChangeNotifier {
     required this.definition,
     this.reducedMotion = false,
     this.aiMoveChooser,
+    this.aiDelay,
     this.minimumAiTurnDuration = const Duration(milliseconds: 800),
     GameState? initialState,
   }) {
@@ -23,9 +24,14 @@ class GuidedMatchController extends ChangeNotifier {
   final GuidedMatchDefinition definition;
   final bool reducedMotion;
   final AiMoveChooser? aiMoveChooser;
+  final AiDelay? aiDelay;
   final Duration minimumAiTurnDuration;
   late MatchController _match;
   MatchController get match => _match;
+  final ChangeNotifier _landingEvents = ChangeNotifier();
+
+  /// One event for every accepted landing across all retry attempts.
+  Listenable get landings => _landingEvents;
   GuidedMatchPhase _phase = GuidedMatchPhase.introduction;
   GuidedMatchPhase get phase => _phase;
   final Set<ReviewConcept> _encountered = {};
@@ -37,22 +43,34 @@ class GuidedMatchController extends ChangeNotifier {
   GuidedCoachCue? _eventCue;
 
   void _createMatch(GameState? state) {
-    _match = MatchController(
-      session: MatchSession.newGame(
-        mode: MatchMode.ai,
-        humanSide: definition.humanSide,
-        bottomSide: definition.humanSide,
-        blackName: definition.humanSide == Side.black ? 'You' : 'Crown AI',
-        whiteName: definition.humanSide == Side.white ? 'You' : 'Crown AI',
-        initialState: state,
-      ),
-      repository: MemoryCrownRepository(),
-      policy: MatchSessionPolicy.lesson,
-      lessonAiProfile: AiProfile(skill: definition.aiSkill),
-      aiMoveChooser: aiMoveChooser,
-      minimumAiTurnDuration: minimumAiTurnDuration,
-      animateJumps: !reducedMotion,
-    )..addListener(_onMatchChanged);
+    _match =
+        MatchController(
+            session: MatchSession.newGame(
+              mode: MatchMode.ai,
+              humanSide: definition.humanSide,
+              bottomSide: definition.humanSide,
+              blackName: definition.humanSide == Side.black
+                  ? 'You'
+                  : 'Crown AI',
+              whiteName: definition.humanSide == Side.white
+                  ? 'You'
+                  : 'Crown AI',
+              initialState: state,
+            ),
+            repository: MemoryCrownRepository(),
+            policy: MatchSessionPolicy.lesson,
+            lessonAiProfile: AiProfile(skill: definition.aiSkill),
+            aiMoveChooser: aiMoveChooser,
+            aiDelay: aiDelay,
+            minimumAiTurnDuration: minimumAiTurnDuration,
+            animateJumps: !reducedMotion,
+          )
+          ..addListener(_onMatchChanged)
+          ..landings.addListener(_landed);
+  }
+
+  void _landed() {
+    if (!_disposed) _landingEvents.notifyListeners();
   }
 
   String get feedback {
@@ -168,6 +186,7 @@ class GuidedMatchController extends ChangeNotifier {
   void retry() {
     if (_disposed || lessonComplete) return;
     _match.removeListener(_onMatchChanged);
+    _match.landings.removeListener(_landed);
     _match.dispose();
     _encountered.clear();
     _observedTurns = 0;
@@ -181,7 +200,9 @@ class GuidedMatchController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _match.removeListener(_onMatchChanged);
+    _match.landings.removeListener(_landed);
     _match.dispose();
+    _landingEvents.dispose();
     super.dispose();
   }
 }

@@ -84,6 +84,7 @@ class _CrownAppShellState extends State<CrownAppShell> {
             bottomPadding: bottomPadding,
             highContrast: _settings.highContrast,
             reducedMotion: _settings.reducedMotion,
+            sound: _settings.sound,
             showCoordinates: _settings.showCoordinates,
             lastCompletedLesson: _learnProgress.lastCompletedLesson,
             onLessonCompleted: _completeLesson,

@@ -22,6 +22,7 @@ class LearnScreen extends StatefulWidget {
     required this.bottomPadding,
     this.highContrast = false,
     this.reducedMotion = false,
+    this.sound = true,
     this.showCoordinates = false,
     this.lastCompletedLesson = 0,
     this.onLessonCompleted,
@@ -34,6 +35,7 @@ class LearnScreen extends StatefulWidget {
   final double bottomPadding;
   final bool highContrast;
   final bool reducedMotion;
+  final bool sound;
   final bool showCoordinates;
 
   /// Sequential completion supplied by the lesson runner. The MVP starts at zero.
@@ -192,7 +194,6 @@ class _LearnScreenState extends State<LearnScreen> {
   Future<void> _selectLesson(LearnUnit unit, LearnLesson lesson) async {
     final action = await showLessonDetails(
       context: context,
-      curriculum: _catalog!.units,
       unit: unit,
       lesson: lesson,
       locked: lesson.number > _lastCompletedLesson + 1,
@@ -219,6 +220,7 @@ class _LearnScreenState extends State<LearnScreen> {
               controller: controller,
               highContrast: widget.highContrast,
               reducedMotion: widget.reducedMotion,
+              sound: widget.sound,
               showCoordinates: widget.showCoordinates,
             ),
           ),
@@ -239,6 +241,7 @@ class _LearnScreenState extends State<LearnScreen> {
               controller: controller,
               highContrast: widget.highContrast,
               reducedMotion: widget.reducedMotion,
+              sound: widget.sound,
               showCoordinates: widget.showCoordinates,
             ),
           ),
@@ -398,7 +401,6 @@ class _LearnScreenState extends State<LearnScreen> {
                                                 child: KeyedSubtree(
                                                   key: _unitSummaryAnchorKey,
                                                   child: LearnUnitHeader(
-                                                    curriculum: catalog.units,
                                                     unit: _currentUnit,
                                                     highContrast:
                                                         widget.highContrast,
@@ -472,9 +474,6 @@ class _LearnScreenState extends State<LearnScreen> {
                                                                     'unit-list-header-${unit.number}',
                                                                   ),
                                                                   child: LearnUnitHeader(
-                                                                    curriculum:
-                                                                        catalog
-                                                                            .units,
                                                                     unit: unit,
                                                                     highContrast:
                                                                         widget

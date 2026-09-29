@@ -9,7 +9,6 @@ enum LessonDetailsAction { start }
 
 Future<LessonDetailsAction?> showLessonDetails({
   required BuildContext context,
-  required List<LearnUnit> curriculum,
   required LearnUnit unit,
   required LearnLesson lesson,
   required bool locked,
@@ -39,11 +38,7 @@ Future<LessonDetailsAction?> showLessonDetails({
               ],
             ),
             const SizedBox(height: 12),
-            LearnUnitHeader(
-              curriculum: curriculum,
-              unit: unit,
-              highContrast: highContrast,
-            ),
+            LearnUnitHeader(unit: unit, highContrast: highContrast),
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 20),
               child: Divider(),

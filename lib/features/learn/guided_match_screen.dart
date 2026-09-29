@@ -7,6 +7,7 @@ import '../../app/crown_icon.dart';
 import '../../app/crown_theme.dart';
 import '../match/match_controller.dart';
 import '../match/match_result_sheet.dart';
+import '../match/move_audio.dart';
 import '../match/singleplayer_match_layout.dart';
 import 'guided_match_controller.dart';
 import 'lesson_definition.dart';
@@ -18,6 +19,8 @@ class GuidedMatchScreen extends StatefulWidget {
     required this.controller,
     required this.highContrast,
     required this.reducedMotion,
+    this.sound = true,
+    this.createMoveAudio,
     this.showCoordinates = false,
     super.key,
   });
@@ -25,6 +28,8 @@ class GuidedMatchScreen extends StatefulWidget {
   final GuidedMatchController controller;
   final bool highContrast;
   final bool reducedMotion;
+  final bool sound;
+  final MoveAudio Function()? createMoveAudio;
   final bool showCoordinates;
 
   @override
@@ -40,11 +45,14 @@ class _GuidedMatchScreenState extends State<GuidedMatchScreen> {
   bool _overlayOpen = false;
   bool _presentationScheduled = false;
   bool _leaving = false;
+  MoveAudio? _moveAudio;
 
   @override
   void initState() {
     super.initState();
     controller.addListener(_changed);
+    controller.landings.addListener(_landed);
+    _syncAudio();
     _schedulePhaseSheet();
   }
 
@@ -53,17 +61,37 @@ class _GuidedMatchScreenState extends State<GuidedMatchScreen> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.controller != controller) {
       oldWidget.controller.removeListener(_changed);
+      oldWidget.controller.landings.removeListener(_landed);
       controller.addListener(_changed);
+      controller.landings.addListener(_landed);
       _introducedAttempt = null;
       _resultAttempt = null;
       _schedulePhaseSheet();
     }
+    if (oldWidget.sound != widget.sound) _syncAudio();
   }
 
   @override
   void dispose() {
+    controller.landings.removeListener(_landed);
     controller.removeListener(_changed);
+    unawaited(_moveAudio?.dispose());
     super.dispose();
+  }
+
+  void _syncAudio() {
+    if (widget.sound) {
+      _moveAudio ??= widget.createMoveAudio?.call() ?? MoveAudio();
+      unawaited(_moveAudio!.prepare());
+    } else {
+      final audio = _moveAudio;
+      _moveAudio = null;
+      unawaited(audio?.dispose());
+    }
+  }
+
+  void _landed() {
+    if (mounted && widget.sound) unawaited(_moveAudio?.play());
   }
 
   void _changed() {
@@ -451,9 +479,15 @@ class _ReviewList extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SafeArea(
     top: false,
+    bottom: false,
     child: SingleChildScrollView(
       key: const ValueKey('unit-one-review-list'),
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        24 + MediaQuery.paddingOf(context).bottom,
+      ),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 620),
@@ -500,7 +534,7 @@ class _ReviewList extends StatelessWidget {
               ],
               if (onComplete != null) ...[
                 const SizedBox(height: 8),
-                GoldButton(label: 'COMPLETE LESSON', onPressed: onComplete!),
+                GoldButton(label: 'COMPLETE UNIT', onPressed: onComplete!),
               ],
             ],
           ),

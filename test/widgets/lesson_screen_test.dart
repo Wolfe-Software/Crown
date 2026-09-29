@@ -169,8 +169,9 @@ void main() {
       expect(find.bySemanticsLabel('Black Wins'), findsOneWidget);
       expect(find.bySemanticsLabel('White Wins'), findsOneWidget);
       expect(find.bySemanticsLabel('Draw'), findsOneWidget);
+      await tester.ensureVisible(find.byKey(drawKey));
+      await tester.pumpAndSettle();
       final initialBoardRect = tester.getRect(find.byType(CheckersBoard));
-
       await tester.tap(find.byKey(drawKey));
       await tester.pump();
       expect(
@@ -180,6 +181,7 @@ void main() {
       expect(find.byType(GameResultSummary), findsNothing);
       expect(tester.getRect(find.byType(CheckersBoard)), initialBoardRect);
 
+      await tester.ensureVisible(find.byKey(blackKey));
       await tester.tap(find.byKey(blackKey));
       await tester.pumpAndSettle();
       expect(tester.getRect(find.byType(CheckersBoard)), initialBoardRect);
@@ -228,7 +230,7 @@ void main() {
     expect(tester.getRect(find.byType(CheckersBoard)), initialBoardRect);
   });
 
-  testWidgets('Lesson 7 fits a 320 by 568 viewport without scrolling', (
+  testWidgets('Lesson 7 keeps a full-size board in a 320 by 568 viewport', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(320, 568);
@@ -254,29 +256,28 @@ void main() {
         ),
       );
 
-      expect(find.byType(SingleChildScrollView), findsNothing);
+      expect(find.byType(SingleChildScrollView), findsOneWidget);
       final viewport = Offset.zero & tester.view.physicalSize;
       final board = find.byType(CheckersBoard);
-      final visible = [
-        board,
-        find.byKey(const ValueKey('lesson-feedback')),
-        if (exercise.interactionType == LessonInteractionType.choice)
-          find.byKey(const ValueKey('lesson-choice-row')),
-      ];
-      for (final finder in visible) {
-        expect(viewport.contains(tester.getTopLeft(finder)), isTrue);
-        expect(viewport.contains(tester.getBottomRight(finder)), isTrue);
-      }
+      expect(viewport.contains(tester.getTopLeft(board)), isTrue);
+      expect(viewport.contains(tester.getBottomRight(board)), isTrue);
       expect(tester.getSize(board).width, tester.getSize(board).height);
-      expect(tester.getSize(board).width, greaterThan(0));
-      final initialBoardRect = tester.getRect(board);
+      expect(tester.getSize(board).width, 288);
       if (exercise.interactionType == LessonInteractionType.choice) {
         final incorrect = exercise.choiceOptions.firstWhere(
           (option) => option.id != exercise.correctChoiceId,
         );
+        final choice = find.byKey(ValueKey('lesson-choice-${incorrect.id}'));
+        await tester.ensureVisible(choice);
+        await tester.pump();
+        final initialBoardSize = tester.getSize(board);
         controller.selectChoice(incorrect.id);
         await tester.pump();
-        expect(tester.getRect(board), initialBoardRect);
+        expect(tester.getSize(board), initialBoardSize);
+        await tester.ensureVisible(
+          find.byKey(const ValueKey('lesson-feedback')),
+        );
+        await tester.pump();
         expect(
           viewport.contains(
             tester.getBottomRight(
@@ -321,7 +322,9 @@ void main() {
       ),
     );
 
-    expect(find.byType(SingleChildScrollView), findsNothing);
+    expect(find.byType(SingleChildScrollView), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('lesson-feedback')));
+    await tester.pump();
     final viewport = Offset.zero & tester.view.physicalSize;
     expect(
       viewport.contains(

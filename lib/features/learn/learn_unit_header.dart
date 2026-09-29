@@ -5,7 +5,6 @@ import 'learn_curriculum.dart';
 
 class LearnUnitHeader extends StatelessWidget {
   const LearnUnitHeader({
-    required this.curriculum,
     required this.unit,
     required this.highContrast,
     this.onTap,
@@ -15,7 +14,6 @@ class LearnUnitHeader extends StatelessWidget {
   });
 
   final LearnUnit unit;
-  final List<LearnUnit> curriculum;
   final bool highContrast;
   final VoidCallback? onTap;
   final bool expanded;
@@ -40,15 +38,7 @@ class LearnUnitHeader extends StatelessWidget {
           decoration: const BoxDecoration(
             border: Border(left: BorderSide(color: CrownColors.gold, width: 2)),
           ),
-          // Keep the board still when browsing unit titles of different lengths.
-          child: IndexedStack(
-            index: unit.number - 1,
-            alignment: Alignment.topLeft,
-            children: [
-              for (final unit in curriculum)
-                _UnitLabel(unit: unit, highContrast: highContrast),
-            ],
-          ),
+          child: _UnitLabel(unit: unit, highContrast: highContrast),
         ),
       ),
     ),

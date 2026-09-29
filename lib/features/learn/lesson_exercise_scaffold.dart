@@ -66,12 +66,35 @@ class LessonExerciseScaffold extends StatelessWidget {
     ),
     body: SafeArea(
       top: false,
+      bottom: false,
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxHeight < 650;
+          final compact =
+              constraints.maxWidth < 400 || constraints.maxHeight < 650;
+          final compactAction =
+              constraints.maxWidth < 400 &&
+              constraints.maxHeight < 650 &&
+              !isFinalExercise;
           final gap = compact ? 6.0 : 16.0;
-          return Padding(
-            padding: EdgeInsets.fromLTRB(16, compact ? 8 : 12, 16, 12),
+          final boardSize = math.min(620.0, constraints.maxWidth - 32);
+          final bottomPadding = math.max(
+            12.0,
+            MediaQuery.paddingOf(context).bottom,
+          );
+          final feedbackWidget = _StableLessonFeedback(
+            feedback: feedback,
+            messages: feedbackMessages,
+            feedbackKey: feedbackKey,
+            compact: compact,
+            exerciseComplete: exerciseComplete,
+          );
+          return SingleChildScrollView(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              compact ? 8 : 12,
+              16,
+              bottomPadding,
+            ),
             child: Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 620),
@@ -128,20 +151,46 @@ class LessonExerciseScaffold extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: gap),
-                    Expanded(child: Center(child: board)),
+                    Center(
+                      child: SizedBox.square(
+                        dimension: boardSize,
+                        child: board,
+                      ),
+                    ),
                     if (interaction != null) ...[
                       SizedBox(height: gap),
                       interaction!,
                     ],
                     SizedBox(height: gap),
-                    _StableLessonFeedback(
-                      feedback: feedback,
-                      messages: feedbackMessages,
-                      feedbackKey: feedbackKey,
-                      compact: compact,
-                      exerciseComplete: exerciseComplete,
-                    ),
-                    if (exerciseComplete && showCompletionAction) ...[
+                    if (exerciseComplete &&
+                        showCompletionAction &&
+                        compactAction)
+                      Row(
+                        children: [
+                          Expanded(child: feedbackWidget),
+                          const SizedBox(width: 12),
+                          Tooltip(
+                            message: 'Continue',
+                            child: SizedBox.square(
+                              dimension: 48,
+                              child: FilledButton(
+                                key: const ValueKey('lesson-continue-compact'),
+                                style: FilledButton.styleFrom(
+                                  padding: EdgeInsets.zero,
+                                  shape: const CircleBorder(),
+                                ),
+                                onPressed: onContinue,
+                                child: const Icon(Icons.arrow_forward_rounded),
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      feedbackWidget,
+                    if (exerciseComplete &&
+                        showCompletionAction &&
+                        !compactAction) ...[
                       SizedBox(height: gap),
                       GoldButton(
                         label: isFinalExercise ? 'COMPLETE LESSON' : 'CONTINUE',

@@ -225,6 +225,33 @@ void main() {
     await tester.pumpWidget(const SizedBox.shrink());
   });
 
+  testWidgets('Unit 1 Rules scrolls through the bottom system inset', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await pumpLesson(tester, padding: const EdgeInsets.only(bottom: 34));
+    await tap(tester, 'BEGIN MATCH');
+    await action(tester, 'Unit 1 Rules');
+
+    final review = find.byKey(const ValueKey('unit-one-review-list'));
+    expect(tester.getRect(review).bottom, 844);
+
+    final scrollable = find.descendant(
+      of: review,
+      matching: find.byType(Scrollable),
+    );
+    final position = tester.state<ScrollableState>(scrollable).position;
+    position.jumpTo(position.maxScrollExtent);
+    await tester.pumpAndSettle();
+    expect(
+      tester.getRect(find.text(definition.review.last.body)).bottom,
+      lessThanOrEqualTo(810),
+    );
+  });
+
   testWidgets(
     'victory sheet opens one scrollable recap with completion at its end',
     (tester) async {
@@ -247,16 +274,16 @@ void main() {
       for (final item in definition.review) {
         expect(find.text(item.title), findsOneWidget);
       }
-      expect(find.text('COMPLETE LESSON').hitTestable(), findsNothing);
-      await tester.ensureVisible(find.text('COMPLETE LESSON'));
+      expect(find.text('COMPLETE UNIT').hitTestable(), findsNothing);
+      await tester.ensureVisible(find.text('COMPLETE UNIT'));
       expect(
-        tester.getTopLeft(find.text('COMPLETE LESSON')).dy,
+        tester.getTopLeft(find.text('COMPLETE UNIT')).dy,
         greaterThan(
           tester.getBottomLeft(find.text(definition.review.last.body)).dy,
         ),
       );
       expect(controller.lessonComplete, isFalse);
-      await tap(tester, 'COMPLETE LESSON');
+      await tap(tester, 'COMPLETE UNIT');
       expect(controller.lessonComplete, isTrue);
       expect(find.text('OPEN LESSON'), findsOneWidget);
     },
@@ -396,7 +423,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       await tap(tester, 'REVIEW UNIT 1');
-      await tap(tester, 'COMPLETE LESSON');
+      await tap(tester, 'COMPLETE UNIT');
       expect(tester.takeException(), isNull);
     },
   );

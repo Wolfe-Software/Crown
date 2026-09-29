@@ -4,6 +4,12 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:crown/features/match/move_audio.dart';
 import 'package:crown/features/match/match_controller.dart';
 import 'package:crown/features/match/match_screen.dart';
+import 'package:crown/features/learn/guided_match_controller.dart';
+import 'package:crown/features/learn/guided_match_screen.dart';
+import 'package:crown/features/learn/lesson_asset_loader.dart';
+import 'package:crown/features/learn/lesson_definition.dart';
+import 'package:crown/features/learn/lesson_screen.dart';
+import 'package:crown/features/learn/lesson_session_controller.dart';
 import 'package:crown/game_engine/checkers_engine.dart';
 import 'package:crown/persistence/crown_repository.dart';
 import 'package:flutter/material.dart';
@@ -38,8 +44,33 @@ class RecordingPlayer implements AudioPlayer {
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
 }
 
+class RecordingMoveAudio extends MoveAudio {
+  int prepares = 0;
+  int plays = 0;
+  int disposals = 0;
+
+  @override
+  Future<void> prepare() async => prepares++;
+
+  @override
+  Future<void> play() async => plays++;
+
+  @override
+  Future<void> dispose() async => disposals++;
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  late GuidedMatchDefinition guidedDefinition;
+  late LessonDefinition standardDefinition;
+  setUpAll(() async {
+    final catalog = await LessonAssetLoader().loadCatalog(
+      'assets/learn/catalog.json',
+    );
+    guidedDefinition =
+        catalog.definitions['lesson-008']! as GuidedMatchDefinition;
+    standardDefinition = catalog.definitions['lesson-001']!;
+  });
   test('iOS preloads and reuses its native audio player', () async {
     debugDefaultTargetPlatformOverride = TargetPlatform.iOS;
     addTearDown(() => debugDefaultTargetPlatformOverride = null);
@@ -107,6 +138,185 @@ void main() {
       await audio.dispose();
     },
   );
+
+  for (final sound in [true, false]) {
+    testWidgets('standard lessons respect sound=$sound across exercises', (
+      tester,
+    ) async {
+      final audio = RecordingMoveAudio();
+      var audioCreations = 0;
+      final controller = LessonSessionController(
+        definition: standardDefinition,
+        reducedMotion: true,
+      );
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LessonScreen(
+            controller: controller,
+            highContrast: false,
+            reducedMotion: true,
+            sound: sound,
+            createMoveAudio: () {
+              audioCreations++;
+              return audio;
+            },
+          ),
+        ),
+      );
+
+      for (final target in controller.placementTargets) {
+        controller.tapSquare(target);
+      }
+      controller.continueExercise();
+      controller.tapSquare(controller.placementTargets.first);
+      await tester.pump();
+
+      expect(audioCreations, sound ? 1 : 0);
+      expect(audio.prepares, sound ? 1 : 0);
+      expect(audio.plays, sound ? 4 : 0);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      expect(audio.disposals, sound ? 1 : 0);
+    });
+  }
+
+  testWidgets('standard lesson audio follows a replacement controller', (
+    tester,
+  ) async {
+    final audio = RecordingMoveAudio();
+    final first = LessonSessionController(
+      definition: standardDefinition,
+      reducedMotion: true,
+    );
+    final second = LessonSessionController(
+      definition: standardDefinition,
+      reducedMotion: true,
+    );
+    addTearDown(first.dispose);
+    addTearDown(second.dispose);
+
+    Widget lesson(LessonSessionController controller) => MaterialApp(
+      home: LessonScreen(
+        controller: controller,
+        highContrast: false,
+        reducedMotion: true,
+        sound: true,
+        createMoveAudio: () => audio,
+      ),
+    );
+
+    await tester.pumpWidget(lesson(first));
+    first.tapSquare(first.placementTargets.first);
+    expect(audio.plays, 1);
+
+    await tester.pumpWidget(lesson(second));
+    first.tapSquare(first.placementTargets.elementAt(1));
+    second.tapSquare(second.placementTargets.first);
+    expect(audio.plays, 2);
+  });
+
+  for (final sound in [true, false]) {
+    testWidgets('Lesson 8 human and AI turns respect sound=$sound', (
+      tester,
+    ) async {
+      final audio = RecordingMoveAudio();
+      var audioCreations = 0;
+      final controller = GuidedMatchController(
+        definition: guidedDefinition,
+        reducedMotion: true,
+        minimumAiTurnDuration: Duration.zero,
+        aiDelay: (_) async {},
+        aiMoveChooser: (state, _) async =>
+            const CheckersEngine().legalTurns(state).first,
+      );
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GuidedMatchScreen(
+            controller: controller,
+            highContrast: false,
+            reducedMotion: true,
+            sound: sound,
+            createMoveAudio: () {
+              audioCreations++;
+              return audio;
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('BEGIN MATCH'));
+      await tester.pumpAndSettle();
+      await controller.tapSquare(const Square(2, 1));
+      final move = controller.tapSquare(const Square(3, 0));
+      await tester.pump();
+      await move;
+      await tester.pumpAndSettle();
+
+      expect(audioCreations, sound ? 1 : 0);
+      expect(audio.plays, sound ? 2 : 0);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+      expect(audio.disposals, sound ? 1 : 0);
+    });
+  }
+
+  testWidgets('Lesson 8 clicks on each landing and stays wired after retry', (
+    tester,
+  ) async {
+    final audio = RecordingMoveAudio();
+    final controller = GuidedMatchController(
+      definition: guidedDefinition,
+      reducedMotion: true,
+      initialState: GameState.custom(
+        sideToMove: Side.black,
+        pieces: {
+          const Square(1, 0): const Piece.blackMan(),
+          const Square(2, 1): const Piece.whiteMan(),
+          const Square(4, 3): const Piece.whiteMan(),
+          const Square(7, 6): const Piece.whiteMan(),
+        },
+      ),
+      minimumAiTurnDuration: Duration.zero,
+      aiDelay: (_) async {},
+      aiMoveChooser: (state, _) async =>
+          const CheckersEngine().legalTurns(state).first,
+    );
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: GuidedMatchScreen(
+          controller: controller,
+          highContrast: false,
+          reducedMotion: true,
+          sound: true,
+          createMoveAudio: () => audio,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('BEGIN MATCH'));
+    await tester.pumpAndSettle();
+    await controller.tapSquare(const Square(1, 0));
+    await controller.tapSquare(const Square(3, 2));
+    final capture = controller.tapSquare(const Square(5, 4));
+    await tester.pump();
+    await capture;
+    await tester.pumpAndSettle();
+    expect(audio.plays, 3);
+
+    controller.retry();
+    await controller.begin();
+    await controller.tapSquare(const Square(2, 1));
+    final move = controller.tapSquare(const Square(3, 0));
+    await tester.pump();
+    await move;
+    await tester.pumpAndSettle();
+    expect(audio.plays, 5);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+  });
   test(
     'rapid landing sounds wait for completion and disposal cancels the queue',
     () async {

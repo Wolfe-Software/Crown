@@ -20,6 +20,9 @@ class LessonSessionController extends ChangeNotifier {
   final LessonDefinition definition;
   final bool reducedMotion;
   final List<Turn> _recordedPlayerTurns = [];
+  final ChangeNotifier _landingEvents = ChangeNotifier();
+
+  Listenable get landings => _landingEvents;
 
   int _exerciseIndex = 0;
   late GameState _state;
@@ -134,6 +137,7 @@ class LessonSessionController extends ChangeNotifier {
       return;
     }
     _pieces[square] = exercise.placementPiece!;
+    _landed();
     final remaining = exercise.placementTargets
         .where((target) => !_pieces.containsKey(target))
         .length;
@@ -214,6 +218,7 @@ class LessonSessionController extends ChangeNotifier {
     _pieces[landing] = movingPiece;
     _landingPrefix.add(landing);
     _activeJump = null;
+    _landed();
 
     final matches = _selectedTurns;
     final complete = matches.where(
@@ -266,6 +271,7 @@ class LessonSessionController extends ChangeNotifier {
   void _startTurnAnimation(Turn turn, {required VoidCallback onFinished}) {
     if (!turn.isCapture || reducedMotion) {
       onFinished();
+      _landed(turn.landings.length);
       return;
     }
     final movingPiece = _state.pieces[turn.origin]!;
@@ -291,6 +297,7 @@ class LessonSessionController extends ChangeNotifier {
     _schedule(jumpDuration, () {
       _pieces.remove(turn.captures[index]);
       _activeJump = null;
+      _landed();
       final next = index + 1;
       if (next < turn.landings.length) {
         _animateJumpSegment(turn, next, movingPiece, onFinished);
@@ -344,10 +351,18 @@ class LessonSessionController extends ChangeNotifier {
     });
   }
 
+  void _landed([int count = 1]) {
+    if (_disposed) return;
+    for (var index = 0; index < count; index++) {
+      _landingEvents.notifyListeners();
+    }
+  }
+
   @override
   void dispose() {
     _disposed = true;
     _timer?.cancel();
+    _landingEvents.dispose();
     super.dispose();
   }
 }

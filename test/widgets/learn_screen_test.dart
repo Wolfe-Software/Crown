@@ -462,8 +462,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('CONTINUE REVIEW'), findsNothing);
     expect((await repository.loadLearnProgress()).lastCompletedLesson, 7);
-    await tester.ensureVisible(find.text('COMPLETE LESSON'));
-    await tester.tap(find.text('COMPLETE LESSON'));
+    await tester.ensureVisible(find.text('COMPLETE UNIT'));
+    await tester.tap(find.text('COMPLETE UNIT'));
     await tester.pumpAndSettle();
     expect((await repository.loadLearnProgress()).lastCompletedLesson, 8);
     expect(find.byKey(const ValueKey('completed-lesson-8')), findsOneWidget);
@@ -713,6 +713,22 @@ void main() {
     expect(instruction.center.dy, closeTo(legend.center.dy, .1));
     expect(instruction.left, closeTo(tester.getRect(panel).left, .1));
     expect(legend.right, closeTo(tester.getRect(panel).right, .1));
+  });
+
+  testWidgets('compact unit summary has no height from hidden unit names', (
+    tester,
+  ) async {
+    await pumpLearn(tester, size: const Size(320, 568));
+    final summary = find.byKey(const ValueKey('learn-unit-summary'));
+    final visibleName = find.descendant(
+      of: summary,
+      matching: find.text(curriculum.first.name),
+    );
+
+    expect(
+      tester.getRect(summary).bottom,
+      closeTo(tester.getRect(visibleName).bottom, .1),
+    );
   });
 
   testWidgets(
@@ -1117,6 +1133,7 @@ void main() {
       final repository = MemoryCrownRepository();
       await repository.saveSettings(
         const CrownSettings(
+          sound: false,
           highContrast: true,
           reducedMotion: true,
           showCoordinates: true,
@@ -1129,6 +1146,10 @@ void main() {
       await tester.tap(find.text('Learn'));
       await tester.pumpAndSettle();
       expect(
+        tester.widget<LearnScreen>(find.byType(LearnScreen)).sound,
+        isFalse,
+      );
+      expect(
         tester.widget<LessonBoard>(find.byType(LessonBoard)).highContrast,
         isTrue,
       );
@@ -1136,6 +1157,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'START'));
       await tester.pumpAndSettle();
+      expect(
+        tester.widget<LessonScreen>(find.byType(LessonScreen)).sound,
+        isFalse,
+      );
       expect(find.byKey(const ValueKey('coordinate-0-0')), findsOneWidget);
       await tester.pageBack();
       await tester.pumpAndSettle();

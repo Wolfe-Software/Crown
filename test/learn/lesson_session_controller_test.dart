@@ -24,14 +24,18 @@ void main() {
       reducedMotion: true,
     );
     addTearDown(controller.dispose);
+    var landings = 0;
+    controller.landings.addListener(() => landings++);
 
     expect(controller.exerciseId, 'place-black');
     expect(controller.pieces, hasLength(21));
     controller.tapSquare(const Square(3, 0));
     expect(controller.feedback, contains('not a gap'));
+    expect(landings, 0);
     for (final target in controller.placementTargets) {
       controller.tapSquare(target);
     }
+    expect(landings, 3);
     expect(controller.exerciseComplete, isTrue);
     expect(controller.feedback, 'Black now has all 12 starting pieces.');
 
@@ -118,11 +122,19 @@ void main() {
 
     final controller = await reach(4);
     addTearDown(controller.dispose);
+    var landings = 0;
+    controller.landings.addListener(() => landings++);
     final playerTurn = controller.legalTurns.single;
     _tapTurn(controller, playerTurn);
+    expect(landings, playerTurn.landings.length);
     expect(controller.exerciseComplete, isFalse);
     expect(controller.feedback, contains('Watch the reply'));
     await tester.pump(controller.opponentPause);
+    expect(
+      landings,
+      playerTurn.landings.length +
+          lessons[2].exercises.last.opponentReply!.landings.length,
+    );
     expect(controller.exerciseComplete, isTrue);
     expect(controller.lastTurn, lessons[2].exercises.last.opponentReply);
     expect(controller.lessonComplete, isFalse);
@@ -135,6 +147,8 @@ void main() {
     final turn = definition.exercises.single.authoredTurns.single;
     final controller = LessonSessionController(definition: definition);
     addTearDown(controller.dispose);
+    var landings = 0;
+    controller.landings.addListener(() => landings++);
 
     controller.tapSquare(turn.origin);
     expect(controller.destinations, {turn.landings.first});
@@ -144,6 +158,7 @@ void main() {
     expect(controller.activeJump?.to, turn.landings.first);
 
     await tester.pump(LessonSessionController.jumpDuration);
+    expect(landings, 1);
     expect(controller.activeJump, isNull);
     expect(controller.exerciseComplete, isFalse);
     expect(controller.recordedPlayerTurns, isEmpty);
@@ -154,6 +169,7 @@ void main() {
     expect(controller.pieces, contains(turn.captures.last));
 
     await tester.pump(LessonSessionController.jumpDuration);
+    expect(landings, 1);
     expect(controller.activeJump, isNull);
     expect(controller.exerciseComplete, isFalse);
 
@@ -162,6 +178,7 @@ void main() {
     expect(controller.activeJump?.to, turn.landings.last);
     await tester.pump(LessonSessionController.jumpDuration);
 
+    expect(landings, 2);
     expect(controller.activeJump, isNull);
     expect(controller.exerciseComplete, isTrue);
     expect(controller.recordedPlayerTurns, [turn]);
@@ -177,18 +194,23 @@ void main() {
       reducedMotion: true,
     );
     addTearDown(controller.dispose);
+    var landings = 0;
+    controller.landings.addListener(() => landings++);
 
     controller.tapSquare(turn.origin);
     controller.tapSquare(turn.destination);
+    expect(landings, 0);
     expect(controller.exerciseComplete, isFalse);
     expect(controller.recordedPlayerTurns, isEmpty);
 
     controller.tapSquare(turn.landings.first);
+    expect(landings, 1);
     expect(controller.exerciseComplete, isFalse);
     expect(controller.selectedSquare, turn.landings.first);
     expect(controller.destinations, {turn.landings.last});
 
     controller.tapSquare(turn.landings.last);
+    expect(landings, 2);
     expect(controller.exerciseComplete, isTrue);
     expect(controller.recordedPlayerTurns, [turn]);
   });
