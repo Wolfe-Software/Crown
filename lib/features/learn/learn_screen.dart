@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../app/crown_theme.dart';
 import '../../app/crown_wordmark.dart';
+import '../../persistence/crown_repository.dart';
 import 'guided_match_controller.dart';
 import 'guided_match_screen.dart';
 import 'learn_curriculum.dart';
@@ -26,6 +27,7 @@ class LearnScreen extends StatefulWidget {
     this.showCoordinates = false,
     this.lastCompletedLesson = 0,
     this.onLessonCompleted,
+    this.onChallengeAttemptCompleted,
     this.catalog,
     LessonAssetLoader? loader,
     super.key,
@@ -41,6 +43,8 @@ class LearnScreen extends StatefulWidget {
   /// Sequential completion supplied by the lesson runner. The MVP starts at zero.
   final int lastCompletedLesson;
   final Future<void> Function(int lesson)? onLessonCompleted;
+  final Future<void> Function(LearnLesson lesson, MatchRecord record)?
+  onChallengeAttemptCompleted;
   final LessonAssetLoader loader;
   final LearnCatalog? catalog;
 
@@ -212,6 +216,9 @@ class _LearnScreenState extends State<LearnScreen> {
       final controller = GuidedMatchController(
         definition: definition,
         reducedMotion: noMotion,
+        onAttemptCompleted: (record) async {
+          await widget.onChallengeAttemptCompleted?.call(lesson, record);
+        },
       );
       try {
         completed = await Navigator.of(context).push<bool>(

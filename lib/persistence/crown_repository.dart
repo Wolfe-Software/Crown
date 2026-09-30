@@ -238,6 +238,116 @@ class MatchRecord {
   );
 }
 
+sealed class FeedEntry {
+  const FeedEntry();
+
+  String get id;
+  DateTime get occurredAt;
+  Map<String, Object?> toJson();
+
+  factory FeedEntry.fromJson(Map<String, Object?> json) {
+    if (json['version'] != 1) {
+      throw const FormatException('Unsupported feed entry');
+    }
+    return switch (json['type']) {
+      'match' => MatchFeedEntry.fromJson(json),
+      'lessonCompletion' => LessonCompletionFeedEntry.fromJson(json),
+      'challengeAttempt' => ChallengeAttemptFeedEntry.fromJson(json),
+      _ => throw const FormatException('Unknown feed entry type'),
+    };
+  }
+}
+
+final class MatchFeedEntry extends FeedEntry {
+  const MatchFeedEntry(this.record);
+
+  final MatchRecord record;
+
+  @override
+  String get id => 'match:${record.id}';
+  @override
+  DateTime get occurredAt => record.completedAt;
+
+  @override
+  Map<String, Object?> toJson() => {
+    'version': 1,
+    'type': 'match',
+    'record': record.toJson(),
+  };
+
+  factory MatchFeedEntry.fromJson(Map<String, Object?> json) => MatchFeedEntry(
+    MatchRecord.fromJson((json['record']! as Map).cast<String, Object?>()),
+  );
+}
+
+final class LessonCompletionFeedEntry extends FeedEntry {
+  const LessonCompletionFeedEntry({
+    required this.lessonId,
+    required this.lessonNumber,
+    required this.completedAt,
+  });
+
+  final String lessonId;
+  final int lessonNumber;
+  final DateTime completedAt;
+
+  @override
+  String get id => 'lesson:$lessonId';
+  @override
+  DateTime get occurredAt => completedAt;
+
+  @override
+  Map<String, Object?> toJson() => {
+    'version': 1,
+    'type': 'lessonCompletion',
+    'lessonId': lessonId,
+    'lessonNumber': lessonNumber,
+    'completedAt': completedAt.toIso8601String(),
+  };
+
+  factory LessonCompletionFeedEntry.fromJson(Map<String, Object?> json) =>
+      LessonCompletionFeedEntry(
+        lessonId: json['lessonId']! as String,
+        lessonNumber: json['lessonNumber']! as int,
+        completedAt: DateTime.parse(json['completedAt']! as String),
+      );
+}
+
+final class ChallengeAttemptFeedEntry extends FeedEntry {
+  const ChallengeAttemptFeedEntry({
+    required this.lessonId,
+    required this.lessonNumber,
+    required this.record,
+  });
+
+  final String lessonId;
+  final int lessonNumber;
+  final MatchRecord record;
+
+  @override
+  String get id => 'challenge:${record.id}';
+  @override
+  DateTime get occurredAt => record.completedAt;
+
+  @override
+  Map<String, Object?> toJson() => {
+    'version': 1,
+    'type': 'challengeAttempt',
+    'lessonId': lessonId,
+    'lessonNumber': lessonNumber,
+    'record': record.toJson(),
+  };
+
+  factory ChallengeAttemptFeedEntry.fromJson(Map<String, Object?> json) =>
+      ChallengeAttemptFeedEntry(
+        lessonId: json['lessonId']! as String,
+        lessonNumber: json['lessonNumber']! as int,
+        record: MatchRecord.fromJson(
+          (json['record']! as Map).cast<String, Object?>(),
+        ),
+      );
+}
+
 class CrownSettings {
   const CrownSettings({
     this.sound = true,
@@ -334,7 +444,8 @@ abstract class CrownRepository {
   Future<void> clearActiveMatch();
   Future<List<MatchRecord>> loadHistory();
   Future<void> addHistory(MatchRecord record);
-  Future<void> clearHistory();
+  Future<List<FeedEntry>> loadFeed();
+  Future<void> addFeedEntry(FeedEntry entry);
   Future<CrownSettings> loadSettings();
   Future<void> saveSettings(CrownSettings settings);
   Future<AiProfile> loadAiProfile();
@@ -345,7 +456,7 @@ abstract class CrownRepository {
 
 class MemoryCrownRepository implements CrownRepository {
   MatchSession? _active;
-  final List<MatchRecord> _history = [];
+  final List<FeedEntry> _feed = [];
   CrownSettings _settings = const CrownSettings();
   AiProfile _profile = const AiProfile();
   LearnProgress _learnProgress = const LearnProgress();
@@ -357,16 +468,23 @@ class MemoryCrownRepository implements CrownRepository {
   @override
   Future<void> clearActiveMatch() async => _active = null;
   @override
-  Future<List<MatchRecord>> loadHistory() async => List.unmodifiable(_history);
+  Future<List<MatchRecord>> loadHistory() async => List.unmodifiable(
+    _feed.whereType<MatchFeedEntry>().map((entry) => entry.record),
+  );
   @override
-  Future<void> addHistory(MatchRecord record) async {
-    _history.removeWhere((item) => item.id == record.id);
-    _history.insert(0, record);
-    if (_history.length > 50) _history.removeRange(50, _history.length);
-  }
+  Future<void> addHistory(MatchRecord record) =>
+      addFeedEntry(MatchFeedEntry(record));
 
   @override
-  Future<void> clearHistory() async => _history.clear();
+  Future<List<FeedEntry>> loadFeed() async => List.unmodifiable(_feed);
+  @override
+  Future<void> addFeedEntry(FeedEntry entry) async {
+    _feed.removeWhere((item) => item.id == entry.id);
+    _feed.add(entry);
+    _feed.sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    if (_feed.length > 50) _feed.removeRange(50, _feed.length);
+  }
+
   @override
   Future<CrownSettings> loadSettings() async => _settings;
   @override
@@ -392,6 +510,7 @@ class SharedPreferencesCrownRepository implements CrownRepository {
   final SharedPreferences _preferences;
   static const _activeKey = 'active_match_v1';
   static const _historyKey = 'match_history_v1';
+  static const _feedKey = 'feed_history_v1';
   static const _settingsKey = 'settings_v1';
   static const _aiKey = 'ai_profile_v1';
   static const _learnProgressKey = 'learn_progress_v1';
@@ -419,35 +538,73 @@ class SharedPreferencesCrownRepository implements CrownRepository {
 
   @override
   Future<List<MatchRecord>> loadHistory() async {
-    final value = _preferences.getString(_historyKey);
-    if (value == null) return const [];
+    final feed = await loadFeed();
+    return feed
+        .whereType<MatchFeedEntry>()
+        .map((entry) => entry.record)
+        .toList();
+  }
+
+  @override
+  Future<void> addHistory(MatchRecord record) =>
+      addFeedEntry(MatchFeedEntry(record));
+
+  @override
+  Future<List<FeedEntry>> loadFeed() async {
+    final value = _preferences.getString(_feedKey);
+    if (value != null) {
+      try {
+        return (jsonDecode(value) as List)
+            .map(
+              (item) =>
+                  FeedEntry.fromJson((item as Map).cast<String, Object?>()),
+            )
+            .toList();
+      } on Object {
+        await _discardCorruptFeed();
+        return const [];
+      }
+    }
+
+    final legacy = _preferences.getString(_historyKey);
+    if (legacy == null) return const [];
     try {
-      return (jsonDecode(value) as List)
+      final feed = (jsonDecode(legacy) as List)
           .map(
-            (item) =>
-                MatchRecord.fromJson((item as Map).cast<String, Object?>()),
+            (item) => MatchFeedEntry(
+              MatchRecord.fromJson((item as Map).cast<String, Object?>()),
+            ),
           )
           .toList();
-    } on FormatException {
-      await clearHistory();
+      await _saveFeed(feed);
+      return feed;
+    } on Object {
+      await _discardCorruptFeed();
       return const [];
     }
   }
 
   @override
-  Future<void> addHistory(MatchRecord record) async {
-    final history = [...await loadHistory()];
-    history.removeWhere((item) => item.id == record.id);
-    history.insert(0, record);
-    if (history.length > 50) history.removeRange(50, history.length);
+  Future<void> addFeedEntry(FeedEntry entry) async {
+    final feed = [...await loadFeed()];
+    feed.removeWhere((item) => item.id == entry.id);
+    feed.add(entry);
+    feed.sort((a, b) => b.occurredAt.compareTo(a.occurredAt));
+    if (feed.length > 50) feed.removeRange(50, feed.length);
+    await _saveFeed(feed);
+  }
+
+  Future<void> _saveFeed(List<FeedEntry> feed) async {
     await _preferences.setString(
-      _historyKey,
-      jsonEncode(history.map((item) => item.toJson()).toList()),
+      _feedKey,
+      jsonEncode(feed.map((item) => item.toJson()).toList()),
     );
   }
 
-  @override
-  Future<void> clearHistory() => _preferences.remove(_historyKey);
+  Future<void> _discardCorruptFeed() async {
+    await _preferences.remove(_feedKey);
+    await _preferences.remove(_historyKey);
+  }
 
   @override
   Future<CrownSettings> loadSettings() async {

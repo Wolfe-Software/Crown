@@ -57,11 +57,32 @@ class _CrownAppShellState extends State<CrownAppShell> {
   }
 
   Future<void> _completeLesson(int lesson) async {
+    final isNewCompletion = lesson > _learnProgress.lastCompletedLesson;
     final progress = LearnProgress(lastCompletedLesson: lesson);
     await widget.repository.saveLearnProgress(progress);
+    if (isNewCompletion && lesson % 8 != 0) {
+      await widget.repository.addFeedEntry(
+        LessonCompletionFeedEntry(
+          lessonId: 'lesson-${lesson.toString().padLeft(3, '0')}',
+          lessonNumber: lesson,
+          completedAt: DateTime.now(),
+        ),
+      );
+    }
     final saved = await widget.repository.loadLearnProgress();
     if (mounted) setState(() => _learnProgress = saved);
   }
+
+  Future<void> _completeChallengeAttempt(
+    LearnLesson lesson,
+    MatchRecord record,
+  ) => widget.repository.addFeedEntry(
+    ChallengeAttemptFeedEntry(
+      lessonId: lesson.id,
+      lessonNumber: lesson.number,
+      record: record,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -88,6 +109,7 @@ class _CrownAppShellState extends State<CrownAppShell> {
             showCoordinates: _settings.showCoordinates,
             lastCompletedLesson: _learnProgress.lastCompletedLesson,
             onLessonCompleted: _completeLesson,
+            onChallengeAttemptCompleted: _completeChallengeAttempt,
           ),
           HistoryScreen(
             repository: widget.repository,

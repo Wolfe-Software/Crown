@@ -16,6 +16,7 @@ class GuidedMatchController extends ChangeNotifier {
     this.aiMoveChooser,
     this.aiDelay,
     this.minimumAiTurnDuration = const Duration(milliseconds: 800),
+    this.onAttemptCompleted,
     GameState? initialState,
   }) {
     _createMatch(initialState);
@@ -26,6 +27,7 @@ class GuidedMatchController extends ChangeNotifier {
   final AiMoveChooser? aiMoveChooser;
   final AiDelay? aiDelay;
   final Duration minimumAiTurnDuration;
+  final MatchCompleted? onAttemptCompleted;
   late MatchController _match;
   MatchController get match => _match;
   final ChangeNotifier _landingEvents = ChangeNotifier();
@@ -63,6 +65,7 @@ class GuidedMatchController extends ChangeNotifier {
             aiMoveChooser: aiMoveChooser,
             aiDelay: aiDelay,
             minimumAiTurnDuration: minimumAiTurnDuration,
+            onCompleted: onAttemptCompleted,
             animateJumps: !reducedMotion,
           )
           ..addListener(_onMatchChanged)

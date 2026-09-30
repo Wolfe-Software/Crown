@@ -46,6 +46,8 @@ void main() {
     bool reducedMotion = false,
     bool showCoordinates = false,
     Future<void> Function(int lesson)? onLessonCompleted,
+    Future<void> Function(LearnLesson lesson, MatchRecord record)?
+    onChallengeAttemptCompleted,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -67,6 +69,7 @@ void main() {
           reducedMotion: reducedMotion,
           showCoordinates: showCoordinates,
           onLessonCompleted: onLessonCompleted,
+          onChallengeAttemptCompleted: onChallengeAttemptCompleted,
         ),
       ),
     );
@@ -423,6 +426,7 @@ void main() {
     tester,
   ) async {
     final repository = MemoryCrownRepository();
+    ChallengeAttemptFeedEntry? attempt;
     await repository.saveLearnProgress(
       const LearnProgress(lastCompletedLesson: 7),
     );
@@ -433,6 +437,13 @@ void main() {
       onLessonCompleted: (lesson) => repository.saveLearnProgress(
         LearnProgress(lastCompletedLesson: lesson),
       ),
+      onChallengeAttemptCompleted: (lesson, record) async {
+        attempt = ChallengeAttemptFeedEntry(
+          lessonId: lesson.id,
+          lessonNumber: lesson.number,
+          record: record,
+        );
+      },
     );
     await tester.tap(tile(8));
     await tester.pumpAndSettle();
@@ -456,6 +467,8 @@ void main() {
     await tester.pumpAndSettle();
     await controller.tapSquare(const Square(4, 3));
     await tester.pumpAndSettle();
+    expect(attempt?.lessonNumber, 8);
+    expect(attempt?.record.perspectiveOutcome, PerspectiveOutcome.victory);
     expect((await repository.loadLearnProgress()).lastCompletedLesson, 7);
     await tester.ensureVisible(find.text('REVIEW UNIT 1'));
     await tester.tap(find.text('REVIEW UNIT 1'));

@@ -22,7 +22,7 @@ class HistoryScreen extends StatefulWidget {
 }
 
 class _HistoryScreenState extends State<HistoryScreen> {
-  List<MatchRecord> _records = const [];
+  List<FeedEntry> _entries = const [];
   @override
   void initState() {
     super.initState();
@@ -36,8 +36,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<void> _load() async {
-    final value = await widget.repository.loadHistory();
-    if (mounted) setState(() => _records = value);
+    final value = await widget.repository.loadFeed();
+    if (mounted) setState(() => _entries = value);
   }
 
   @override
@@ -48,18 +48,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: CustomScrollView(
         key: const ValueKey('feed-scroll'),
         slivers: [
-          SliverAppBar(
-            floating: true,
-            backgroundColor: Colors.transparent,
-            actions: [
-              if (_records.isNotEmpty)
-                IconButton(
-                  tooltip: 'Clear history',
-                  onPressed: _clear,
-                  icon: const Icon(Icons.delete_outline_rounded),
-                ),
-            ],
-          ),
+          SliverAppBar(floating: true, backgroundColor: Colors.transparent),
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
             sliver: SliverToBoxAdapter(
@@ -78,7 +67,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 34)),
-          if (_records.isEmpty)
+          if (_entries.isEmpty)
             SliverFillRemaining(
               hasScrollBody: false,
               child: Padding(
@@ -86,7 +75,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 child: const Center(
                   child: GlassPanel(
                     child: Text(
-                      'Completed matches will appear here, ready to replay.',
+                      'Matches, lessons, and challenges will appear here.',
                     ),
                   ),
                 ),
@@ -96,13 +85,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
             SliverPadding(
               padding: EdgeInsets.fromLTRB(24, 0, 24, widget.bottomPadding),
               sliver: SliverList.separated(
-                itemCount: _records.length,
+                itemCount: _entries.length,
                 separatorBuilder: (_, _) => const SizedBox(height: 10),
                 itemBuilder: (context, index) {
-                  final record = _records[index];
-                  return MatchRecordRow(
-                    record: record,
-                    onReplay: () => Navigator.push(
+                  return FeedEntryRow(
+                    entry: _entries[index],
+                    onReplay: (record) => Navigator.push(
                       context,
                       MaterialPageRoute<void>(
                         builder: (_) => ReplayScreen(
@@ -119,28 +107,4 @@ class _HistoryScreenState extends State<HistoryScreen> {
       ),
     ),
   );
-
-  Future<void> _clear() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Clear match history?'),
-        content: const Text('Saved replays will be permanently removed.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Clear'),
-          ),
-        ],
-      ),
-    );
-    if (confirmed == true) {
-      await widget.repository.clearHistory();
-      await _load();
-    }
-  }
 }

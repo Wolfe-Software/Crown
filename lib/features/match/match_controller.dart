@@ -11,6 +11,7 @@ typedef AiMoveChooser = Future<Turn> Function(
 );
 typedef AiDelay = Future<void> Function(Duration duration);
 typedef JumpDelay = Future<void> Function(Duration duration);
+typedef MatchCompleted = Future<void> Function(MatchRecord record);
 
 enum MatchSessionPolicy { regular, lesson }
 
@@ -34,6 +35,7 @@ class MatchController extends ChangeNotifier {
     this.animateJumps = false,
     this.jumpDuration = const Duration(milliseconds: 260),
     JumpDelay? jumpDelay,
+    this.onCompleted,
   }) : _aiMoveChooser =
            aiMoveChooser ??
            ((state, profile) => const CrownAi().chooseTurn(state, profile)),
@@ -42,6 +44,7 @@ class MatchController extends ChangeNotifier {
 
   final CrownRepository repository;
   final MatchSessionPolicy policy;
+  final MatchCompleted? onCompleted;
   final AiProfile lessonAiProfile;
   final CheckersEngine _engine = const CheckersEngine();
   final AiMoveChooser _aiMoveChooser;
@@ -326,9 +329,13 @@ class MatchController extends ChangeNotifier {
   }
 
   Future<void> _finish() async {
-    if (policy == MatchSessionPolicy.lesson) return;
+    final record = MatchRecord.fromSession(session);
+    if (policy == MatchSessionPolicy.lesson) {
+      await onCompleted?.call(record);
+      return;
+    }
     await repository.clearActiveMatch();
-    await repository.addHistory(MatchRecord.fromSession(session));
+    await repository.addFeedEntry(MatchFeedEntry(record));
     if (session.mode == MatchMode.ai && session.humanSide != null) {
       final profile = await repository.loadAiProfile();
       final result = state.result!;

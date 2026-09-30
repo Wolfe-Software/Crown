@@ -52,6 +52,26 @@ void main() {
     },
   );
 
+  test(
+    'lesson policy reports a completed replay without saving history',
+    () async {
+      final repository = MemoryCrownRepository();
+      MatchRecord? completed;
+      final controller = MatchController(
+        session: lessonSession(),
+        repository: repository,
+        policy: MatchSessionPolicy.lesson,
+        onCompleted: (record) async => completed = record,
+      );
+      addTearDown(controller.dispose);
+
+      await controller.resign(Side.black);
+
+      expect(completed?.perspectiveOutcome, PerspectiveOutcome.defeat);
+      expect(await repository.loadFeed(), isEmpty);
+    },
+  );
+
   test('disposed match ignores a late AI answer', () async {
     final answer = Completer<Turn>();
     final controller = MatchController(

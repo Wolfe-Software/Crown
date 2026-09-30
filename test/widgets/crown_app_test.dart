@@ -9,6 +9,7 @@ import 'package:crown/features/home/local_color_picker.dart';
 import 'package:crown/features/learn/learn_curriculum.dart';
 import 'package:crown/features/learn/lesson_asset_loader.dart';
 import 'package:crown/features/learn/lesson_board.dart';
+import 'package:crown/features/learn/learn_screen.dart';
 import 'package:crown/features/match/checker_piece.dart';
 import 'package:crown/features/match/checkers_board.dart';
 import 'package:crown/features/match/match_controller.dart';
@@ -48,6 +49,60 @@ void main() {
       1,
     );
     expect(find.byKey(const ValueKey('next-lesson-2')), findsOneWidget);
+  });
+
+  testWidgets('app shell records first lesson completions but not challenges', (
+    tester,
+  ) async {
+    final repository = MemoryCrownRepository();
+    await tester.pumpWidget(
+      CrownApp(repository: repository, learnCatalog: learnCatalog),
+    );
+    await tester.pumpAndSettle();
+    final learn = tester.widget<LearnScreen>(
+      find.byType(LearnScreen, skipOffstage: false),
+    );
+
+    await learn.onLessonCompleted!(1);
+    await learn.onLessonCompleted!(1);
+    await learn.onLessonCompleted!(8);
+
+    final feed = await repository.loadFeed();
+    expect(feed.whereType<LessonCompletionFeedEntry>(), hasLength(1));
+    expect(feed.whereType<LessonCompletionFeedEntry>().single.lessonNumber, 1);
+    expect((await repository.loadLearnProgress()).lastCompletedLesson, 8);
+  });
+
+  testWidgets('app shell records challenge attempts with lesson metadata', (
+    tester,
+  ) async {
+    final repository = MemoryCrownRepository();
+    await tester.pumpWidget(
+      CrownApp(repository: repository, learnCatalog: learnCatalog),
+    );
+    await tester.pumpAndSettle();
+    final learn = tester.widget<LearnScreen>(
+      find.byType(LearnScreen, skipOffstage: false),
+    );
+    final lesson = learnCatalog.units.first.lessons.last;
+    final session = MatchSession.newGame(
+      mode: MatchMode.ai,
+      humanSide: Side.black,
+      blackName: 'You',
+      whiteName: 'Crown AI',
+    );
+    final record = MatchRecord.fromSession(
+      session.copyWith(
+        state: const CheckersEngine().resign(session.state, Side.black),
+      ),
+    );
+
+    await learn.onChallengeAttemptCompleted!(lesson, record);
+
+    final entry = (await repository.loadFeed()).single;
+    expect(entry, isA<ChallengeAttemptFeedEntry>());
+    expect((entry as ChallengeAttemptFeedEntry).lessonNumber, 8);
+    expect(entry.record.id, record.id);
   });
 
   testWidgets('crown icon renders the photographic logo asset', (tester) async {
@@ -281,7 +336,7 @@ void main() {
     await tester.tap(find.text('Feed'));
     await tester.pumpAndSettle();
     expect(
-      find.text('Completed matches will appear here, ready to replay.'),
+      find.text('Matches, lessons, and challenges will appear here.'),
       findsOneWidget,
     );
 
@@ -688,6 +743,51 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Guest'), findsOneWidget);
+  });
+
+  testWidgets('feed displays lesson completions and replays challenges', (
+    tester,
+  ) async {
+    final repository = MemoryCrownRepository();
+    final session = MatchSession.newGame(
+      mode: MatchMode.ai,
+      humanSide: Side.black,
+      bottomSide: Side.black,
+      blackName: 'You',
+      whiteName: 'Crown AI',
+    );
+    final completed = session.copyWith(
+      state: const CheckersEngine().resign(session.state, Side.black),
+    );
+    await repository.addFeedEntry(
+      LessonCompletionFeedEntry(
+        lessonId: 'lesson-007',
+        lessonNumber: 7,
+        completedAt: DateTime(2026),
+      ),
+    );
+    await repository.addFeedEntry(
+      ChallengeAttemptFeedEntry(
+        lessonId: 'lesson-008',
+        lessonNumber: 8,
+        record: MatchRecord.fromSession(completed),
+      ),
+    );
+    await tester.pumpWidget(
+      CrownApp(repository: repository, learnCatalog: learnCatalog),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Feed'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Lesson 7'), findsOneWidget);
+    expect(find.text('Challenge 8'), findsOneWidget);
+    expect(find.byTooltip('Clear history'), findsNothing);
+    expect(find.byIcon(Icons.delete_outline_rounded), findsNothing);
+    await tester.tap(find.text('Replay'));
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(AppBar, 'Replay'), findsOneWidget);
   });
 
   testWidgets('local match gives both seats the same mirrored HUD', (

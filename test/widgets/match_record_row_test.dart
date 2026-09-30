@@ -29,6 +29,53 @@ void main() {
       expect(replayed, isTrue);
     }
   });
+
+  testWidgets('lesson feed entry uses the Learn icon and Lesson X label', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FeedEntryRow(
+          entry: LessonCompletionFeedEntry(
+            lessonId: 'lesson-003',
+            lessonNumber: 3,
+            completedAt: DateTime(2026),
+          ),
+          onReplay: (_) {},
+        ),
+      ),
+    );
+
+    expect(find.text('Lesson 3'), findsOneWidget);
+    expect(find.text('Replay'), findsNothing);
+    final image = tester.widget<Image>(find.byType(Image));
+    expect((image.image as AssetImage).assetName, 'assets/LearnLogo.png');
+    expect(find.bySemanticsLabel('Lesson completed'), findsOneWidget);
+  });
+
+  testWidgets('challenge feed entry shows its outcome and can replay', (
+    tester,
+  ) async {
+    final record = _record(PerspectiveOutcome.draw);
+    MatchRecord? replayed;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: FeedEntryRow(
+          entry: ChallengeAttemptFeedEntry(
+            lessonId: 'lesson-008',
+            lessonNumber: 8,
+            record: record,
+          ),
+          onReplay: (value) => replayed = value,
+        ),
+      ),
+    );
+
+    expect(find.text('Challenge 8'), findsOneWidget);
+    expect(find.bySemanticsLabel('Draw'), findsOneWidget);
+    await tester.tap(find.text('Replay'));
+    expect(replayed, record);
+  });
 }
 
 MatchRecord _record(PerspectiveOutcome outcome) {

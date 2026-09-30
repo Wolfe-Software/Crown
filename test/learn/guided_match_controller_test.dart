@@ -5,6 +5,7 @@ import 'package:crown/features/learn/lesson_asset_loader.dart';
 import 'package:crown/features/learn/lesson_definition.dart';
 import 'package:crown/game_engine/checkers_engine.dart';
 import 'package:crown/game_engine/crown_ai.dart';
+import 'package:crown/persistence/crown_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
@@ -17,7 +18,10 @@ void main() {
     definition = catalog.definitions['lesson-008']! as GuidedMatchDefinition;
   });
 
-  GuidedMatchController create({GameState? state}) {
+  GuidedMatchController create({
+    GameState? state,
+    Future<void> Function(MatchRecord record)? onAttemptCompleted,
+  }) {
     final controller = GuidedMatchController(
       definition: definition,
       initialState: state,
@@ -25,6 +29,7 @@ void main() {
       minimumAiTurnDuration: Duration.zero,
       aiMoveChooser: (state, _) async =>
           const CheckersEngine().legalTurns(state).first,
+      onAttemptCompleted: onAttemptCompleted,
     );
     addTearDown(controller.dispose);
     return controller;
@@ -107,6 +112,24 @@ void main() {
       expect(controller.match.state.pieces, hasLength(24));
       expect(controller.encountered, isEmpty);
     }
+  });
+
+  test('reports every finished attempt before a retry', () async {
+    final attempts = <MatchRecord>[];
+    final controller = create(
+      onAttemptCompleted: (record) async => attempts.add(record),
+    );
+
+    await controller.begin();
+    await controller.resign();
+    expect(attempts, hasLength(1));
+    expect(attempts.single.perspectiveOutcome, PerspectiveOutcome.defeat);
+
+    controller.retry();
+    await controller.begin();
+    await controller.resign();
+    expect(attempts, hasLength(2));
+    expect(attempts[1].id, isNot(attempts[0].id));
   });
 
   test('coaches compulsory captures and every landing of a jump', () async {
