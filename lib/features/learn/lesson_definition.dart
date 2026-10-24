@@ -9,7 +9,13 @@ enum LessonBoardSource {
   previousExerciseResult,
 }
 
-enum LessonInteractionType { placement, turn, choice }
+enum LessonInteractionType {
+  placement,
+  turn,
+  choice,
+  squareSelection,
+  observation,
+}
 
 enum LessonChoiceIcon { blackChecker, whiteChecker, draw }
 
@@ -38,6 +44,8 @@ class LessonFeedbackDefinition {
     this.invalidDestination = '',
     this.selected = 'Selected. Choose a highlighted destination.',
     this.awaitingReply,
+    this.goalMiss = '',
+    this.opening,
   });
 
   final String initial;
@@ -47,6 +55,69 @@ class LessonFeedbackDefinition {
   final String invalidDestination;
   final String selected;
   final String? awaitingReply;
+  final String goalMiss;
+  final String? opening;
+}
+
+@immutable
+class LessonTurnPhaseDefinition {
+  const LessonTurnPhaseDefinition({
+    required this.instruction,
+    required this.feedback,
+    this.acceptAllLegalTurns = false,
+    this.acceptLegalSubset = false,
+    this.authoredTurns = const [],
+    this.opponentReply,
+    this.opponentPause = Duration.zero,
+  });
+
+  final String instruction;
+  final LessonFeedbackDefinition feedback;
+  final bool acceptAllLegalTurns;
+  final bool acceptLegalSubset;
+  final List<Turn> authoredTurns;
+  final Turn? opponentReply;
+  final Duration opponentPause;
+}
+
+@immutable
+class LessonTurnFollowUpDefinition {
+  const LessonTurnFollowUpDefinition({
+    required this.afterTurn,
+    required this.phase,
+  });
+
+  final Turn afterTurn;
+  final LessonTurnPhaseDefinition phase;
+}
+
+@immutable
+class LessonPreparationStage {
+  const LessonPreparationStage({
+    required this.question,
+    this.previewTurns = const [],
+    this.threat,
+  });
+
+  final LessonExerciseDefinition question;
+
+  /// Applied to a copy of the starting position, never to the live game.
+  final List<Turn> previewTurns;
+  final LessonThreatDefinition? threat;
+}
+
+@immutable
+class LessonThreatDefinition {
+  const LessonThreatDefinition({
+    required this.label,
+    required this.routes,
+    this.afterTurn,
+  });
+  final String label;
+  final List<Turn> routes;
+
+  /// A conditional threat: what becomes possible if this learner move is made.
+  final Turn? afterTurn;
 }
 
 @immutable
@@ -64,12 +135,19 @@ class LessonExerciseDefinition {
     this.placementPiece,
     this.placementTargets = const {},
     this.acceptAllLegalTurns = false,
+    this.acceptLegalSubset = false,
     this.authoredTurns = const [],
+    this.openingTurns = const [],
+    this.openingPause = const Duration(milliseconds: 550),
     this.opponentReply,
     this.opponentPause = Duration.zero,
+    this.followUps = const [],
     this.choiceOptions = const [],
     this.correctChoiceId,
+    this.squareTargets = const [],
     this.outcome,
+    this.preparation = const [],
+    this.threat,
   });
 
   final String id;
@@ -84,12 +162,29 @@ class LessonExerciseDefinition {
   final Piece? placementPiece;
   final Set<Square> placementTargets;
   final bool acceptAllLegalTurns;
+  final bool acceptLegalSubset;
   final List<Turn> authoredTurns;
+  final List<Turn> openingTurns;
+  final Duration openingPause;
   final Turn? opponentReply;
   final Duration opponentPause;
+  final List<LessonTurnFollowUpDefinition> followUps;
   final List<LessonChoiceOptionDefinition> choiceOptions;
   final String? correctChoiceId;
+  final List<Square> squareTargets;
   final GameResult? outcome;
+  final List<LessonPreparationStage> preparation;
+  final LessonThreatDefinition? threat;
+
+  LessonTurnPhaseDefinition get turnPhase => LessonTurnPhaseDefinition(
+    instruction: instruction,
+    feedback: feedback,
+    acceptAllLegalTurns: acceptAllLegalTurns,
+    acceptLegalSubset: acceptLegalSubset,
+    authoredTurns: authoredTurns,
+    opponentReply: opponentReply,
+    opponentPause: opponentPause,
+  );
 
   List<String> get feedbackMessages => List.unmodifiable(
     {
@@ -100,7 +195,19 @@ class LessonExerciseDefinition {
       feedback.invalidDestination,
       feedback.selected,
       ?feedback.awaitingReply,
+      feedback.goalMiss,
+      ?feedback.opening,
+      for (final followUp in followUps) ...[
+        followUp.phase.feedback.initial,
+        followUp.phase.feedback.selected,
+        followUp.phase.feedback.success,
+        followUp.phase.feedback.invalidPiece,
+        followUp.phase.feedback.invalidDestination,
+        followUp.phase.feedback.goalMiss,
+        ?followUp.phase.feedback.awaitingReply,
+      ],
       for (final option in choiceOptions) option.feedback,
+      for (final stage in preparation) ...stage.question.feedbackMessages,
     }.where((message) => message.isNotEmpty),
   );
 }
@@ -121,17 +228,27 @@ class LessonDefinition {
 }
 
 enum ReviewConcept {
-  board,
-  movement,
-  captures,
-  compulsoryCapture,
-  multipleJumps,
-  promotion,
-  kings,
-  winning,
-  resignation,
-  repetition,
-  quietKings,
+  board(1),
+  movement(1),
+  captures(1),
+  compulsoryCapture(1),
+  multipleJumps(1),
+  promotion(1),
+  kings(1),
+  winning(1),
+  resignation(1),
+  repetition(1),
+  quietKings(1),
+  threatAnatomy(2),
+  openedLanes(2),
+  safeDestinations(2),
+  protection(2),
+  exchanges(2),
+  hiddenJumps(2),
+  safetyCheck(2);
+
+  const ReviewConcept(this.unit);
+  final int unit;
 }
 
 enum GuidedCoachCue {

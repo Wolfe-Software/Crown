@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 2, "id": "lesson-013", "number": 13, "name": "Count the Exchange",
+  "exercises": [
+    {
+      "id": "exchange-1", "title": "One for one", "instruction": "Watch Black capture, then recapture as White to complete the exchange.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 0, "column": 7}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 1}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "openingTurns": [
+        {"origin": {"row": 2, "column": 1}, "landings": [{"row": 4, "column": 3}], "captures": [{"row": 3, "column": 2}]}
+      ], "openingPauseMs": 550, "turns": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}], "captures": [{"row": 4, "column": 3}]}
+      ]},
+      "feedback": {"opening": "Black captures one white man. The exchange is not finished yet.", "initial": "Recapture the black attacker and count both removals.", "selected": "Complete White's recapture.", "success": "White lost one man and Black lost one man. The completed exchange is equal.", "invalidPiece": "Use the white piece that can recapture.", "invalidDestination": "Choose the compulsory capture landing."}
+    },
+    {
+      "id": "exchange-2", "title": "A clean win", "instruction": "Watch White step into danger, then win the exposed man as Black.", "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 4, "column": 3}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "openingTurns": [
+        {"origin": {"row": 4, "column": 3}, "landings": [{"row": 3, "column": 2}], "captures": []}
+      ], "turns": [
+        {"origin": {"row": 2, "column": 1}, "landings": [{"row": 4, "column": 3}], "captures": [{"row": 3, "column": 2}]}
+      ]},
+      "feedback": {"opening": "White moves onto Black's capture diagonal without a supporting recapture.", "initial": "Exploit the exposed piece and check that Black cannot be taken back.", "selected": "Make Black's capture.", "success": "White lost one man; Black lost none. You watched the mistake and won the piece cleanly.", "invalidPiece": "Move the black attacker.", "invalidDestination": "Choose its capture landing."}
+    },
+    {
+      "id": "exchange-3", "title": "Resolve a sound exchange", "instruction": "Watch Black offer an exchange, then make White's compulsory capture and count the reply.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 4}, "side": "black", "rank": "man"},
+        {"square": {"row": 5, "column": 4}, "side": "white", "rank": "man"},
+        {"square": {"row": 7, "column": 6}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "openingTurns": [
+        {"origin": {"row": 3, "column": 4}, "landings": [{"row": 4, "column": 3}], "captures": []}
+      ], "turns": [
+        {"origin": {"row": 5, "column": 4}, "landings": [{"row": 3, "column": 2}], "captures": [{"row": 4, "column": 3}]}
+      ], "opponentReply": {"origin": {"row": 2, "column": 1}, "landings": [{"row": 4, "column": 3}], "captures": [{"row": 3, "column": 2}]}, "opponentPauseMs": 550},
+      "feedback": {"opening": "Black advances a supported man and offers a one-for-one exchange.", "initial": "White must capture. The supported reply makes this an equal exchange, not a clean gain.", "selected": "Take the compulsory capture and count the complete exchange.", "awaitingReply": "Black now makes its compulsory recapture.", "success": "Each side lost one man. White made the required capture and completed a sound equal exchange.", "invalidPiece": "Use White's capturing man.", "invalidDestination": "Choose the capture landing."}
+    },
+    {
+      "id": "exchange-4", "title": "Count a double jump", "instruction": "Watch White open a double jump, then play Black's complete capture and count the recapture.", "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 0, "column": 7}, "side": "black", "rank": "man"},
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 4}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 7, "column": 2}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "openingTurns": [
+        {"origin": {"row": 5, "column": 4}, "landings": [{"row": 4, "column": 3}], "captures": []}
+      ], "turns": [
+        {"origin": {"row": 1, "column": 0}, "landings": [{"row": 3, "column": 2}, {"row": 5, "column": 4}], "captures": [{"row": 2, "column": 1}, {"row": 4, "column": 3}]}
+      ], "opponentReply": {"origin": {"row": 6, "column": 3}, "landings": [{"row": 4, "column": 5}], "captures": [{"row": 5, "column": 4}]}, "opponentPauseMs": 550},
+      "feedback": {"opening": "White adds a second target to Black's capture route. Watch the move before counting its cost.", "initial": "Exploit the double jump, then include White's recapture in the count.", "selected": "Continue every required jump with the same black man.", "awaitingReply": "Black took two men. White can now take back the attacker.", "success": "White lost two men; Black lost one. Black gained one man through the complete exchange.", "invalidPiece": "Use Black's capturing man.", "invalidDestination": "Choose the next capture landing."}
+    },
+    {
+      "id": "exchange-5", "title": "Piece value matters", "instruction": "Watch Black expose its king, then choose White's favorable man-for-king trade.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 7}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 4}, "side": "black", "rank": "king"},
+        {"square": {"row": 4, "column": 5}, "side": "black", "rank": "man"},
+        {"square": {"row": 5, "column": 4}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 7, "column": 0}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "openingTurns": [
+        {"origin": {"row": 3, "column": 4}, "landings": [{"row": 4, "column": 3}], "captures": []}
+      ], "turns": [
+        {"origin": {"row": 5, "column": 4}, "landings": [{"row": 3, "column": 2}], "captures": [{"row": 4, "column": 3}]}
+      ], "opponentReply": {"origin": {"row": 2, "column": 1}, "landings": [{"row": 4, "column": 3}], "captures": [{"row": 3, "column": 2}]}, "opponentPauseMs": 550},
+      "feedback": {"opening": "Black moves its king into a trade where it can only recover a man.", "initial": "Both captures trade one piece each. Choose the favorable exchange that removes the king.", "selected": "Choose the route that removes Black's king.", "awaitingReply": "White took the king. Black will recapture White's man.", "success": "White lost one man; Black lost one king. The counts are equal, but White traded for the more capable piece.", "goalMiss": "That route trades a man for a man. Choose the capture that removes the king instead.", "invalidPiece": "Use White's capturing man.", "invalidDestination": "Choose a legal capture landing."}
+    }
+  ]
+}

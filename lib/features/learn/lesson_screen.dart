@@ -154,11 +154,13 @@ class _LessonScreenState extends State<LessonScreen> {
       exerciseCount: controller.exerciseCount,
       exerciseTitle: controller.title,
       instruction: controller.instruction,
+      boardLabel: controller.previewLabel,
       board: CheckersBoard(
-        pieces: controller.pieces,
+        pieces: controller.displayedPieces,
+        threatRoutes: controller.visibleThreat?.routes ?? const [],
         selected: controller.selectedSquare,
         destinations: controller.destinations,
-        onSquareTap: controller.tapSquare,
+        onSquareTap: controller.acceptsInput ? controller.tapSquare : null,
         activeJump: controller.activeJump,
         lastTurn: controller.lastTurn,
         showCoordinates: widget.showCoordinates,
@@ -167,38 +169,22 @@ class _LessonScreenState extends State<LessonScreen> {
             widget.reducedMotion || MediaQuery.disableAnimationsOf(context),
         bottomSide: controller.perspectiveSide,
       ),
-      interaction:
-          controller.exercise.interactionType == LessonInteractionType.choice
-          ? controller.choiceOptions.every((option) => option.icon != null)
-                ? LessonChoiceRow(
-                    options: controller.choiceOptions,
-                    enabled: !controller.exerciseComplete,
-                    highContrast: widget.highContrast,
-                    reducedMotion: widget.reducedMotion,
-                    onSelected: controller.selectChoice,
-                  )
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      for (final option in controller.choiceOptions) ...[
-                        OutlinedButton(
-                          key: ValueKey('lesson-choice-${option.id}'),
-                          onPressed: controller.exerciseComplete
-                              ? null
-                              : () => controller.selectChoice(option.id),
-                          child: Text(option.label),
-                        ),
-                        if (option != controller.choiceOptions.last)
-                          const SizedBox(height: 8),
-                      ],
-                    ],
-                  )
+      interaction: controller.interactionType == LessonInteractionType.choice
+          ? LessonChoiceRow(
+              options: controller.choiceOptions,
+              enabled: controller.acceptsInput,
+              highContrast: widget.highContrast,
+              reducedMotion: widget.reducedMotion,
+              onSelected: controller.selectChoice,
+            )
           : null,
       feedback: controller.feedback,
       feedbackMessages: controller.exercise.feedbackMessages,
       feedbackKey: const ValueKey('lesson-feedback'),
-      exerciseComplete: controller.exerciseComplete,
-      isFinalExercise: controller.isFinalExercise,
+      exerciseComplete:
+          controller.exerciseComplete || controller.canContinuePreparation,
+      isFinalExercise:
+          controller.isFinalExercise && !controller.canContinuePreparation,
       showCompletionAction: controller.visibleOutcome == null,
       onContinue: _continue,
     );

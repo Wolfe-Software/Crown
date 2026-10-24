@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 3,
+  "type": "guidedMatch",
+  "id": "lesson-016",
+  "number": 16,
+  "name": "Challenge: Hold Your Ground",
+  "startingPosition": "initial",
+  "humanSide": "black",
+  "aiSkill": 0,
+  "completion": "winAndReview",
+  "introduction": "Play a complete game against Crown AI. Before every move use the four-step safety check: 1. Check your captures. 2. Test a candidate move. 3. Inspect their complete reply. 4. Count and decide. Prevent the opponent’s multi-jumps and play the recaptures your support enables. Rules from Units 1 and 2 are available throughout. Win, then finish the recap to complete the unit.",
+  "coaching": {
+    "opening": "Black moves first. Use the safety check before moving: check your captures, test a candidate move, inspect their complete reply, then count and decide.",
+    "selected": "Step 2: test this candidate. Picture its destination and the protection it leaves behind. Then inspect Crown AI's complete capture reply before deciding.",
+    "invalidPiece": "Choose one of your movable pieces. Start by scanning the whole board for a compulsory capture.",
+    "invalidDestination": "Choose a highlighted destination, then picture Crown AI's strongest immediate reply.",
+    "compulsoryCapture": "Step 1: a capture exists, so ordinary moves are unavailable. Test each legal capture route, inspect the reply, and count before choosing. A compulsory capture cannot be declined because it loses material.",
+    "continueJump": "Keep jumping with this piece. Do not judge the exchange until every required jump is complete.",
+    "captures": "A capture changed the material count. Inspect the recapture and play the payoff your support enables when control returns to you.",
+    "multipleJumps": "Step 3: inspect every jump in the opponent's reply before moving. Preserve landing blockers, move a target, or occupy a landing to break the route and prevent a multi-piece loss.",
+    "promotion": "Promotion improves the piece, but still inspect the opponent's next capture before relaxing.",
+    "kings": "Kings threaten in every diagonal direction. Include backward captures in your safety scan.",
+    "awaitingReply": "Crown AI is moving. Watch which lanes and landing squares its move opens.",
+    "yourTurn": "Watch what Crown AI's move changed. Repeat: 1. Check your captures. 2. Test a candidate move. 3. Inspect their complete reply. 4. Count and decide. Include immediate recaptures and the ranks of pieces lost.",
+    "aiError": "Crown AI could not finish its turn. Tap Retry AI Turn to continue this challenge."
+  },
+  "review": [
+    {"concept":"threatAnatomy","title":"See the whole threat","body":"A capture threat needs an attacking piece, an adjacent opponent, and an empty landing beyond it. Check the full diagonal, including backward directions for kings."},
+    {"concept":"openedLanes","title":"Improve without exposing","body":"Keep protective blockers in place while rescuing threatened teammates. Picture what your move opens, then use the safer move to improve the position."},
+    {"concept":"safeDestinations","title":"Compare legal and safe","body":"A legal destination is not automatically safe. Test each candidate by giving the opponent the move and looking for compulsory captures."},
+    {"concept":"protection","title":"Play the protection's payoff","body":"Block the opponent's landing or arrange a legal recapture. A nearby piece is not enough: when your support enables a capture, play it and complete the exchange."},
+    {"concept":"exchanges","title":"Count the complete exchange","body":"Follow captures and immediate recaptures before comparing losses. Count both sides, and remember that giving up a man for a king can be favorable."},
+    {"concept":"hiddenJumps","title":"Break the capture route","body":"Inspect the opponent's entire capture route, including king turns and alternative branches. Rescue a target, block a landing, or preserve an existing blocker. A recapture after losing two men may recover only one attacker."},
+    {"concept":"safetyCheck","title":"Use the four-step safety check","body":"Before every move: 1. Check your captures across the board. 2. Test a candidate move, including what it leaves behind. 3. Inspect their complete reply, including every jump and alternative capture route. 4. Count losses for both sides, include immediate recaptures and ranks, then keep or reject the candidate. Compare an alternative if needed, and only then play."}
+  ]
+}

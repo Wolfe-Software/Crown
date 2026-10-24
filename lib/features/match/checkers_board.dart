@@ -8,6 +8,7 @@ import 'checker_piece.dart';
 import 'jump_animation.dart';
 import 'move_hint.dart';
 import 'square_highlight.dart';
+import 'threat_route_overlay.dart';
 
 typedef PieceDropCallback = void Function(Square origin, Square destination);
 
@@ -29,6 +30,7 @@ class CheckersBoard extends StatelessWidget {
     this.activeJump,
     this.draggableOrigins = const {},
     this.onPieceDrop,
+    this.threatRoutes = const [],
     super.key,
   });
 
@@ -50,6 +52,7 @@ class CheckersBoard extends StatelessWidget {
   final JumpAnimation? activeJump;
   final Set<Square> draggableOrigins;
   final PieceDropCallback? onPieceDrop;
+  final List<Turn> threatRoutes;
 
   @override
   Widget build(BuildContext context) => AspectRatio(
@@ -278,6 +281,17 @@ class CheckersBoard extends StatelessWidget {
                       },
                     ),
                   ),
+                  if (threatRoutes.isNotEmpty)
+                    Positioned.fill(
+                      child: ThreatRouteOverlay(
+                        key: const ValueKey('board-threat-routes'),
+                        routes: threatRoutes,
+                        bottomSide: bottomSide,
+                        highContrast: highContrast,
+                        occupiedSquares: pieces.keys.toSet(),
+                        destinations: destinations,
+                      ),
+                    ),
                   if (activeJump != null)
                     Positioned.fill(
                       child: _JumpingPieceOverlay(

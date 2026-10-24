@@ -225,6 +225,15 @@ class _LearnScreenState extends State<LearnScreen> {
           MaterialPageRoute(
             builder: (_) => GuidedMatchScreen(
               controller: controller,
+              referenceRules: {
+                for (final challenge
+                    in _catalog!.definitions.values
+                        .whereType<GuidedMatchDefinition>()
+                        .where(
+                          (candidate) => candidate.number <= definition.number,
+                        ))
+                  (challenge.number - 1) ~/ 8 + 1: challenge.review,
+              },
               highContrast: widget.highContrast,
               reducedMotion: widget.reducedMotion,
               sound: widget.sound,

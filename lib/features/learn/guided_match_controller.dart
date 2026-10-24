@@ -40,6 +40,7 @@ class GuidedMatchController extends ChangeNotifier {
   Set<ReviewConcept> get encountered => Set.unmodifiable(_encountered);
   bool get lessonComplete => phase == GuidedMatchPhase.complete;
   bool get won => match.state.result?.winner == definition.humanSide;
+  int get _unitNumber => (definition.number - 1) ~/ 8 + 1;
   bool _disposed = false;
   int _observedTurns = 0;
   GuidedCoachCue? _eventCue;
@@ -106,6 +107,7 @@ class GuidedMatchController extends ChangeNotifier {
     if (_disposed || phase != GuidedMatchPhase.introduction) return;
     _phase = GuidedMatchPhase.match;
     _encountered.add(ReviewConcept.board);
+    if (_unitNumber == 2) _encountered.add(ReviewConcept.safetyCheck);
     _onMatchChanged();
     await match.start();
   }
@@ -139,11 +141,26 @@ class GuidedMatchController extends ChangeNotifier {
       if (turn.isCapture) {
         _encountered.add(ReviewConcept.compulsoryCapture);
         _record(ReviewConcept.captures, GuidedCoachCue.captures);
+        if (_unitNumber == 2) {
+          _encountered
+            ..add(ReviewConcept.threatAnatomy)
+            ..add(ReviewConcept.exchanges);
+          if (state.turns.length > 1 &&
+              state.turns[state.turns.length - 2].isCapture) {
+            _encountered.add(ReviewConcept.protection);
+          }
+        }
       } else if (piece.rank == PieceRank.man) {
         _encountered.add(ReviewConcept.movement);
+        if (_unitNumber == 2) {
+          _encountered
+            ..add(ReviewConcept.openedLanes)
+            ..add(ReviewConcept.safeDestinations);
+        }
       }
       if (turn.captures.length > 1) {
         _record(ReviewConcept.multipleJumps, GuidedCoachCue.multipleJumps);
+        if (_unitNumber == 2) _encountered.add(ReviewConcept.hiddenJumps);
       }
       if (piece.rank == PieceRank.king) {
         _record(ReviewConcept.kings, GuidedCoachCue.kings);

@@ -5,7 +5,149 @@ import 'package:crown/game_engine/checkers_engine.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('ordered square selection completes after the authored targets', () {
+    final definition = LessonDefinition(
+      id: 'lesson-009',
+      number: 9,
+      name: 'Spot the Threat',
+      exercises: [
+        LessonExerciseDefinition(
+          id: 'find-threat',
+          title: 'Find the threat',
+          instruction: 'Tap the threatened piece, then the landing square.',
+          perspective: Side.white,
+          boardSource: LessonBoardSource.custom,
+          initialPieces: {
+            const Square(2, 1): const Piece(Side.black, PieceRank.man),
+            const Square(3, 2): const Piece(Side.white, PieceRank.man),
+          },
+          sideToMove: Side.black,
+          interactionType: LessonInteractionType.squareSelection,
+          squareTargets: const [Square(3, 2), Square(4, 3)],
+          feedback: const LessonFeedbackDefinition(
+            initial: 'Find both squares.',
+            progress: 'Now tap the landing square.',
+            success: 'Threat found.',
+            invalidDestination: 'Try another square.',
+          ),
+        ),
+      ],
+    );
+    final controller = LessonSessionController(definition: definition);
+
+    controller.tapSquare(const Square(3, 2));
+    expect(controller.exerciseComplete, isFalse);
+    expect(controller.selectedAnswerSquares, [const Square(3, 2)]);
+    expect(controller.feedback, 'Now tap the landing square.');
+
+    controller.tapSquare(const Square(4, 3));
+    expect(controller.exerciseComplete, isTrue);
+    expect(controller.feedback, 'Threat found.');
+  });
+
+  test('wrong square selection resets the authored answer', () {
+    final definition = LessonDefinition(
+      id: 'lesson-009',
+      number: 9,
+      name: 'Spot the Threat',
+      exercises: [
+        LessonExerciseDefinition(
+          id: 'find-threat',
+          title: 'Find the threat',
+          instruction: 'Tap two squares.',
+          perspective: Side.white,
+          boardSource: LessonBoardSource.custom,
+          initialPieces: const {},
+          sideToMove: Side.black,
+          interactionType: LessonInteractionType.squareSelection,
+          squareTargets: const [Square(3, 2), Square(4, 3)],
+          feedback: const LessonFeedbackDefinition(
+            initial: 'Find both squares.',
+            progress: 'Keep going.',
+            success: 'Correct.',
+            invalidDestination: 'Start again.',
+          ),
+        ),
+      ],
+    );
+    final controller = LessonSessionController(definition: definition);
+
+    controller.tapSquare(const Square(3, 2));
+    controller.tapSquare(const Square(5, 4));
+
+    expect(controller.selectedAnswerSquares, isEmpty);
+    expect(controller.feedback, 'Start again.');
+  });
+
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('square selections reset between exercises', () {
+    final targets = [
+      const [Square(3, 2), Square(4, 3)],
+      const [Square(4, 3), Square(3, 2)],
+      const [Square(4, 1), Square(3, 2)],
+    ];
+    final controller = LessonSessionController(
+      definition: LessonDefinition(
+        id: 'selection-regression',
+        number: 1,
+        name: 'Selection regression',
+        exercises: [
+          for (var index = 0; index < targets.length; index++)
+            LessonExerciseDefinition(
+              id: 'selection-${index + 1}',
+              title: 'Select both squares',
+              instruction: 'Select both squares in order.',
+              perspective: Side.white,
+              boardSource: LessonBoardSource.custom,
+              initialPieces: const {},
+              sideToMove: Side.white,
+              interactionType: LessonInteractionType.squareSelection,
+              squareTargets: targets[index],
+              feedback: const LessonFeedbackDefinition(
+                initial: 'Select the first square.',
+                progress: 'Select the second square.',
+                success: 'Complete.',
+              ),
+            ),
+        ],
+      ),
+    );
+    addTearDown(controller.dispose);
+
+    controller.tapSquare(const Square(3, 2));
+    controller.tapSquare(const Square(4, 3));
+    expect(controller.exerciseComplete, isTrue);
+    controller.continueExercise();
+
+    expect(controller.exerciseId, 'selection-2');
+    expect(controller.selectedAnswerSquares, isEmpty);
+    expect(controller.selectedSquare, isNull);
+    expect(controller.exerciseComplete, isFalse);
+    expect(controller.feedback, controller.exercise.feedback.initial);
+
+    controller.tapSquare(const Square(4, 3));
+    expect(controller.selectedAnswerSquares, [const Square(4, 3)]);
+    expect(controller.selectedSquare, const Square(4, 3));
+    expect(controller.exerciseComplete, isFalse);
+    expect(controller.feedback, controller.exercise.feedback.progress);
+
+    controller.tapSquare(const Square(3, 2));
+    expect(controller.exerciseComplete, isTrue);
+    expect(controller.feedback, controller.exercise.feedback.success);
+    controller.continueExercise();
+
+    expect(controller.exerciseId, 'selection-3');
+    expect(controller.selectedAnswerSquares, isEmpty);
+    expect(controller.selectedSquare, isNull);
+    expect(controller.exerciseComplete, isFalse);
+    expect(controller.feedback, controller.exercise.feedback.initial);
+
+    controller.tapSquare(const Square(4, 1));
+    controller.tapSquare(const Square(3, 2));
+    expect(controller.exerciseComplete, isTrue);
+    expect(controller.feedback, controller.exercise.feedback.success);
+  });
 
   late List<LessonDefinition> lessons;
 

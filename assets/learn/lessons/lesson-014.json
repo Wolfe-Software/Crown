@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 2, "id": "lesson-014", "number": 14, "name": "Beware the Second Jump",
+  "exercises": [
+    {
+      "id": "jump-1", "title": "Escape the double jump", "instruction": "Black's numbered route threatens two white men. Move the first threatened man out of that route.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 0, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 1, "column": 0}, "side": "white", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 4}, "side": "white", "rank": "man"}
+      ]},
+      "threat": {"label": "BLACK'S THREAT — TWO JUMPS", "routes": [
+        {"origin": {"row": 2, "column": 1}, "landings": [{"row": 4, "column": 3}, {"row": 6, "column": 5}], "captures": [{"row": 3, "column": 2}, {"row": 5, "column": 4}]}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 3, "column": 2}, "landings": [{"row": 2, "column": 3}], "captures": []}
+      ]},
+      "feedback": {"initial": "The arrows show what Black could capture if given the turn here. You move first: break the route before it begins.", "selected": "Move the first target to a square outside Black's capture diagonal.", "success": "You moved the first target away. Black cannot start the jump, so both threatened men survive.", "goalMiss": "For this exercise, rescue the first target. Moving the rear man away still lets Black take the advanced man; blocking is another defense you will practice next.", "invalidPiece": "Select the first white man on Black's route.", "invalidDestination": "Choose a legal forward diagonal step."}
+    },
+    {
+      "id": "jump-2", "title": "Block the landing", "instruction": "White threatens a double jump. Move Black's rear man onto White's first landing square to save both targets.", "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 7, "column": 6}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 6}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 7}, "side": "black", "rank": "man"},
+        {"square": {"row": 4, "column": 5}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 3}, "side": "black", "rank": "man"}
+      ]},
+      "threat": {"label": "WHITE'S THREAT — DENY THE FIRST LANDING", "routes": [
+        {"origin": {"row": 5, "column": 6}, "landings": [{"row": 3, "column": 4}, {"row": 1, "column": 2}], "captures": [{"row": 4, "column": 5}, {"row": 2, "column": 3}]}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 2, "column": 3}, "landings": [{"row": 3, "column": 4}], "captures": []}
+      ]},
+      "feedback": {"initial": "An attacker needs an empty landing. Occupy the square marked 1 with Black's rear man.", "selected": "Use the rear man to deny White's first landing.", "success": "Your defender occupies White's landing. White has no capture, so neither black target is lost.", "goalMiss": "Use the rear man to block the first landing. Moving it to the other diagonal leaves the advanced man exposed.", "invalidPiece": "Choose Black's rear man on the capture route.", "invalidDestination": "Choose a legal forward diagonal step."}
+    },
+    {
+      "id": "jump-3", "title": "Keep the blocker", "instruction": "The middle white man already blocks Black's landing. Move another man safely while keeping that protection.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "white", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 3}, "side": "white", "rank": "man"}
+      ]},
+      "threat": {"label": "IF THE MIDDLE BLOCKER MOVES, THIS ROUTE OPENS", "afterTurn": {"origin": {"row": 3, "column": 2}, "landings": [{"row": 2, "column": 3}], "captures": []}, "routes": [
+        {"origin": {"row": 1, "column": 0}, "landings": [{"row": 3, "column": 2}, {"row": 5, "column": 4}], "captures": [{"row": 2, "column": 1}, {"row": 4, "column": 3}]}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 2, "column": 1}, "landings": [{"row": 1, "column": 2}], "captures": []},
+        {"origin": {"row": 4, "column": 3}, "landings": [{"row": 3, "column": 4}], "captures": []}
+      ]},
+      "feedback": {"initial": "This is a conditional route: Black cannot jump while the first landing is occupied. Do not remove that blocker.", "selected": "Check the departure square as well as the destination.", "success": "You moved a target and preserved the middle blocker. Black still has no capture.", "goalMiss": "That move vacates Black's landing and exposes two teammates. Keep the middle blocker and move another man.", "invalidPiece": "Choose a movable white man.", "invalidDestination": "Choose a legal forward step."}
+    },
+    {
+      "id": "jump-4", "title": "Stop the king's route", "instruction": "Black's king can choose either two-jump branch. Move a white piece to stop both routes without losing a target.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 5, "column": 2}, "side": "black", "rank": "king"},
+        {"square": {"row": 4, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 2, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 5}, "side": "white", "rank": "man"}
+      ]},
+      "threat": {"label": "KING THREAT — CHECK BOTH BRANCHES", "routes": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}, {"row": 1, "column": 2}], "captures": [{"row": 4, "column": 3}, {"row": 2, "column": 3}]},
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}, {"row": 5, "column": 6}], "captures": [{"row": 4, "column": 3}, {"row": 4, "column": 5}]}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 4, "column": 3}, "landings": [{"row": 3, "column": 2}], "captures": []},
+        {"origin": {"row": 4, "column": 3}, "landings": [{"row": 3, "column": 4}], "captures": []},
+        {"origin": {"row": 4, "column": 5}, "landings": [{"row": 3, "column": 4}], "captures": []}
+      ]},
+      "feedback": {"initial": "Both branches share the first target and landing. Remove that target or block that landing to stop the whole threat.", "selected": "Kings can turn and jump backward. Your defense must stop every branch.", "success": "The king has no capture. Your move stopped both branches instead of protecting only one second target.", "goalMiss": "That move leaves a capture available. Stop the shared first jump by removing its target or occupying its landing.", "invalidPiece": "Choose a movable white piece.", "invalidDestination": "Choose a legal forward diagonal step."}
+    },
+    {
+      "id": "jump-5", "title": "Don't trust a late recapture", "instruction": "Black would take two men before your back-row supporter could recapture one attacker. Break the route and avoid that loss.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 0, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 1, "column": 0}, "side": "white", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 4}, "side": "white", "rank": "man"},
+        {"square": {"row": 7, "column": 4}, "side": "white", "rank": "man"}
+      ]},
+      "threat": {"label": "TWO MEN LOST BEFORE ONE ATTACKER IS RECAPTURED", "routes": [
+        {"origin": {"row": 2, "column": 1}, "landings": [{"row": 4, "column": 3}, {"row": 6, "column": 5}], "captures": [{"row": 3, "column": 2}, {"row": 5, "column": 4}]}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 3, "column": 2}, "landings": [{"row": 2, "column": 3}], "captures": []},
+        {"origin": {"row": 5, "column": 4}, "landings": [{"row": 4, "column": 3}], "captures": []}
+      ]},
+      "feedback": {"initial": "The supporter cannot interrupt Black's turn. Losing two men and recovering one is a net loss of one. Prevent the jumps instead.", "selected": "Move the first target or block the first landing.", "success": "Black has no capture. You saved both men rather than relying on a recapture that comes too late.", "goalMiss": "That move still permits a capture. Save both targets by removing the first target or blocking the first landing.", "invalidPiece": "Choose a movable white man.", "invalidDestination": "Choose a legal forward diagonal step."}
+    }
+  ]
+}

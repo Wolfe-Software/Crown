@@ -16,11 +16,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late GuidedMatchDefinition definition;
+  late GuidedMatchDefinition unitTwoDefinition;
   setUpAll(() async {
     final catalog = await LessonAssetLoader().loadCatalog(
       'assets/learn/catalog.json',
     );
     definition = catalog.definitions['lesson-008']! as GuidedMatchDefinition;
+    unitTwoDefinition =
+        catalog.definitions['lesson-016']! as GuidedMatchDefinition;
   });
 
   Future<GuidedMatchController> pumpLesson(
@@ -30,9 +33,11 @@ void main() {
     AiMoveChooser? ai,
     bool reducedMotion = true,
     EdgeInsets padding = EdgeInsets.zero,
+    GuidedMatchDefinition? lessonDefinition,
+    Map<int, List<LessonReviewItem>> referenceRules = const {},
   }) async {
     final controller = GuidedMatchController(
-      definition: definition,
+      definition: lessonDefinition ?? definition,
       initialState: state,
       reducedMotion: reducedMotion,
       minimumAiTurnDuration: Duration.zero,
@@ -56,6 +61,7 @@ void main() {
                 MaterialPageRoute(
                   builder: (_) => GuidedMatchScreen(
                     controller: controller,
+                    referenceRules: referenceRules,
                     highContrast: true,
                     reducedMotion: reducedMotion,
                     showCoordinates: true,
@@ -111,6 +117,45 @@ void main() {
       const Square(3, 2): const Piece.whiteMan(),
     },
   );
+
+  testWidgets('Unit 2 rules default to Unit 2 and can show Unit 1', (
+    tester,
+  ) async {
+    await pumpLesson(
+      tester,
+      lessonDefinition: unitTwoDefinition,
+      referenceRules: {1: definition.review, 2: unitTwoDefinition.review},
+    );
+    await tap(tester, 'BEGIN MATCH');
+    await action(tester, 'Unit 2 Rules');
+
+    expect(find.text('UNIT 2 RULES'), findsOneWidget);
+    expect(find.text(unitTwoDefinition.review.first.title), findsOneWidget);
+    expect(find.text(definition.review.first.title), findsNothing);
+
+    await tester.tap(find.text('UNIT 1'));
+    await tester.pumpAndSettle();
+    expect(find.text(definition.review.first.title), findsOneWidget);
+    expect(find.text(unitTwoDefinition.review.first.title), findsNothing);
+  });
+
+  testWidgets('Unit 2 recap contains only Unit 2 rules', (tester) async {
+    final controller = await pumpLesson(
+      tester,
+      state: winningPosition,
+      lessonDefinition: unitTwoDefinition,
+      referenceRules: {1: definition.review, 2: unitTwoDefinition.review},
+    );
+    await tap(tester, 'BEGIN MATCH');
+    await controller.tapSquare(const Square(4, 3));
+    await tester.pumpAndSettle();
+    await tap(tester, 'REVIEW UNIT 2');
+
+    expect(find.text('UNIT 2 RECAP'), findsOneWidget);
+    expect(find.text(unitTwoDefinition.review.first.title), findsOneWidget);
+    expect(find.text(definition.review.first.title), findsNothing);
+    expect(find.text('UNIT 1'), findsNothing);
+  });
 
   testWidgets(
     'introduction is a bottom sheet over the inactive singleplayer board',

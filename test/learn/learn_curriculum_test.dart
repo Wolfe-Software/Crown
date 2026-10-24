@@ -36,7 +36,7 @@ void main() {
         lessons
             .where((lesson) => lesson.definitionAsset != null)
             .map((lesson) => lesson.number),
-        [1, 2, 3, 4, 5, 6, 7, 8],
+        List.generate(16, (index) => index + 1),
       );
       expect(
         lessons.where((lesson) => lesson.status == LessonStatus.available),

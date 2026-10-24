@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 2, "id": "lesson-010", "number": 10, "name": "Before You Move",
+  "exercises": [
+    {
+      "id": "before-1", "title": "Rescue without exposing", "instruction": "Move White's advanced man safely while leaving its blocker in place.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 3}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 3, "column": 2}, "landings": [{"row": 2, "column": 3}], "captures": []}
+      ]},
+      "feedback": {"initial": "Moving the blocker would expose its teammate. Advance the teammate instead.", "selected": "Move the advanced man off the attacker's diagonal.", "success": "White improved the position without exposing a teammate. The blocker stayed in place and the advanced man is safe.", "goalMiss": "Moving the blocker opens Black's capture. Leave it in place and move the advanced man instead.", "invalidPiece": "Choose a movable white piece.", "invalidDestination": "Choose a legal destination."}
+    },
+    {
+      "id": "before-2", "title": "Keep the lane closed", "instruction": "Move White's far edge piece while leaving both central pieces in place.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 7}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 6, "column": 7}, "landings": [{"row": 5, "column": 6}], "captures": []}
+      ]},
+      "feedback": {"initial": "Keep the target and its blocking teammate together.", "selected": "Choose a move that preserves the central arrangement.", "success": "The edge piece moved while Black's landing stayed occupied. The central teammate remains safe.", "goalMiss": "Leave both central pieces in place. Moving the blocker opens Black's landing; use the edge piece instead.", "invalidPiece": "Select a movable white piece.", "invalidDestination": "Choose a legal destination."}
+    },
+    {
+      "id": "before-3", "title": "Do not walk into a jump", "instruction": "Move White's man to a destination Black cannot capture immediately.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 3, "column": 2}, "side": "black", "rank": "man"},
+        {"square": {"row": 5, "column": 4}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 5, "column": 4}, "landings": [{"row": 4, "column": 5}], "captures": []}
+      ]},
+      "feedback": {"initial": "Picture Black's next move after each possible destination.", "selected": "Both steps are legal, but one walks into a capture.", "success": "White stayed away from Black's capture diagonal. Legal does not always mean safe.", "goalMiss": "On that square, Black can jump your man immediately. Try the other legal destination.", "invalidPiece": "Move the white man.", "invalidDestination": "Choose a legal diagonal step."}
+    },
+    {
+      "id": "before-4", "title": "Keep the king's lane closed", "instruction": "Move Black's advanced man safely without vacating the white king's landing.", "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 2, "column": 3}, "side": "white", "rank": "king"},
+        {"square": {"row": 3, "column": 2}, "side": "black", "rank": "man"},
+        {"square": {"row": 4, "column": 1}, "side": "black", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 3, "column": 2}, "landings": [{"row": 4, "column": 3}], "captures": []}
+      ]},
+      "feedback": {"initial": "The rear blocker denies the king a backward jump. Keep it there while moving the advanced man.", "selected": "Move the advanced black man away from the king's capture diagonal.", "success": "Black kept the landing closed and moved its teammate to safety. Both black pieces survived and the king has no immediate capture.", "goalMiss": "Vacating the rear blocker opens a backward capture. Keep it in place and move the advanced man.", "invalidPiece": "Choose a movable black piece.", "invalidDestination": "Choose a legal step."}
+    },
+    {
+      "id": "before-5", "title": "Stay safe, then exploit", "instruction": "Choose White's safe step, then exploit the opportunity in Black's reply.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 3, "column": 2}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 3}, "side": "black", "rank": "man"},
+        {"square": {"row": 5, "column": 4}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 5, "column": 4}, "landings": [{"row": 4, "column": 5}], "captures": []}
+      ], "opponentReply": {"origin": {"row": 2, "column": 3}, "landings": [{"row": 3, "column": 4}], "captures": []}, "opponentPauseMs": 550,
+      "followUps": [{
+        "afterTurn": {"origin": {"row": 5, "column": 4}, "landings": [{"row": 4, "column": 5}], "captures": []},
+        "instruction": "Black stepped into your capture diagonal. Take the exposed man.", "acceptance": "exactLegalSet",
+        "turns": [{"origin": {"row": 4, "column": 5}, "landings": [{"row": 2, "column": 3}], "captures": [{"row": 3, "column": 4}]}],
+        "feedback": {"initial": "Your safe position now lets White punish Black's mistake.", "selected": "Complete the available capture.", "success": "White stayed safe and won a black man. You played the payoff instead of stopping at the setup.", "invalidPiece": "Use White's capturing man.", "invalidDestination": "Choose the legal capture landing."}
+      }]},
+      "feedback": {"initial": "Compare the immediate reply after each destination.", "selected": "Choose the step Black cannot capture immediately.", "awaitingReply": "White is safe. Watch Black step into your capture diagonal.", "success": "White stayed safe and won a black man. You played the payoff instead of stopping at the setup.", "goalMiss": "Black can jump White on that square. Choose the other step.", "invalidPiece": "Move the white man.", "invalidDestination": "Choose a legal destination."}
+    }
+  ]
+}

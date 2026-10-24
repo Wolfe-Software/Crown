@@ -22,6 +22,7 @@ class GuidedMatchScreen extends StatefulWidget {
     this.sound = true,
     this.createMoveAudio,
     this.showCoordinates = false,
+    this.referenceRules = const {},
     super.key,
   });
 
@@ -31,6 +32,7 @@ class GuidedMatchScreen extends StatefulWidget {
   final bool sound;
   final MoveAudio Function()? createMoveAudio;
   final bool showCoordinates;
+  final Map<int, List<LessonReviewItem>> referenceRules;
 
   @override
   State<GuidedMatchScreen> createState() => _GuidedMatchScreenState();
@@ -46,6 +48,7 @@ class _GuidedMatchScreenState extends State<GuidedMatchScreen> {
   bool _presentationScheduled = false;
   bool _leaving = false;
   MoveAudio? _moveAudio;
+  int get _unitNumber => (controller.definition.number - 1) ~/ 8 + 1;
 
   @override
   void initState() {
@@ -206,9 +209,11 @@ class _GuidedMatchScreenState extends State<GuidedMatchScreen> {
           result: attempt.state.result!,
           perspective: controller.definition.humanSide,
           message: controller.won
-              ? 'Well played! Finish the Unit 1 recap to complete this lesson.'
+              ? 'Well played! Finish the Unit $_unitNumber recap to complete this lesson.'
               : 'Every game is practice. Try again, then win and finish the recap to complete this lesson.',
-          actionLabel: controller.won ? 'REVIEW UNIT 1' : 'TRY AGAIN',
+          actionLabel: controller.won
+              ? 'REVIEW UNIT $_unitNumber'
+              : 'TRY AGAIN',
           onAction: () => Navigator.pop(sheetContext, _PhaseAction.proceed),
           onReturnToLearn: () =>
               Navigator.pop(sheetContext, _PhaseAction.leave),
@@ -242,12 +247,47 @@ class _GuidedMatchScreenState extends State<GuidedMatchScreen> {
   Future<void> _showRules() async {
     if (_overlayOpen || _leaving) return;
     _overlayOpen = true;
+    final rules = widget.referenceRules.isEmpty
+        ? {_unitNumber: controller.definition.review}
+        : widget.referenceRules;
+    final units = rules.keys.toList()..sort();
     final route = MaterialPageRoute<void>(
-      builder: (_) => Scaffold(
-        appBar: AppBar(title: const Text('UNIT 1 RULES')),
-        body: _ReviewList(
-          definition: controller.definition,
-          highContrast: widget.highContrast,
+      builder: (_) => DefaultTabController(
+        length: units.length,
+        initialIndex: units.indexOf(_unitNumber).clamp(0, units.length - 1),
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text('UNIT $_unitNumber RULES'),
+            bottom: units.length > 1
+                ? TabBar(
+                    tabs: [for (final unit in units) Tab(text: 'UNIT $unit')],
+                  )
+                : null,
+          ),
+          body: units.length > 1
+              ? TabBarView(
+                  children: [
+                    for (final unit in units)
+                      _ReviewList(
+                        review: rules[unit]!,
+                        highContrast: widget.highContrast,
+                        listKey: ValueKey(
+                          unit == 1
+                              ? 'unit-one-review-list'
+                              : 'unit-$unit-review-list',
+                        ),
+                      ),
+                  ],
+                )
+              : _ReviewList(
+                  review: rules[units.single]!,
+                  highContrast: widget.highContrast,
+                  listKey: ValueKey(
+                    units.single == 1
+                        ? 'unit-one-review-list'
+                        : 'unit-${units.single}-review-list',
+                  ),
+                ),
         ),
       ),
     );
@@ -371,12 +411,17 @@ class _GuidedMatchScreenState extends State<GuidedMatchScreen> {
       },
       child: Scaffold(
         appBar: reviewing
-            ? AppBar(title: const Text('UNIT 1 RECAP'))
+            ? AppBar(title: Text('UNIT $_unitNumber RECAP'))
             : const SingleplayerMatchHeader(),
         body: reviewing
             ? _ReviewList(
-                definition: controller.definition,
+                review: controller.definition.review,
                 highContrast: widget.highContrast,
+                listKey: ValueKey(
+                  _unitNumber == 1
+                      ? 'unit-one-review-list'
+                      : 'unit-$_unitNumber-review-list',
+                ),
                 encountered: controller.encountered,
                 onComplete: () {
                   controller.complete();
@@ -414,7 +459,7 @@ class _GuidedMatchScreenState extends State<GuidedMatchScreen> {
                             ),
                           ),
                           IconButton(
-                            tooltip: 'Unit 1 Rules',
+                            tooltip: 'Unit $_unitNumber Rules',
                             onPressed: _showRules,
                             icon: const Icon(Icons.menu_book_outlined),
                           ),
@@ -466,13 +511,15 @@ class _LessonSheet extends StatelessWidget {
 
 class _ReviewList extends StatelessWidget {
   const _ReviewList({
-    required this.definition,
+    required this.review,
     required this.highContrast,
+    required this.listKey,
     this.encountered,
     this.onComplete,
   });
-  final GuidedMatchDefinition definition;
+  final List<LessonReviewItem> review;
   final bool highContrast;
+  final Key listKey;
   final Set<ReviewConcept>? encountered;
   final VoidCallback? onComplete;
 
@@ -481,7 +528,7 @@ class _ReviewList extends StatelessWidget {
     top: false,
     bottom: false,
     child: SingleChildScrollView(
-      key: const ValueKey('unit-one-review-list'),
+      key: listKey,
       padding: EdgeInsets.fromLTRB(
         16,
         16,
@@ -494,7 +541,7 @@ class _ReviewList extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              for (final item in definition.review) ...[
+              for (final item in review) ...[
                 GlassPanel(
                   padding: const EdgeInsets.all(18),
                   child: Column(

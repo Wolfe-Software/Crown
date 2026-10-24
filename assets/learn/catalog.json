@@ -87,65 +87,73 @@
           "id": "lesson-009",
           "number": 9,
           "name": "Spot the Threat",
-          "objective": "Find the pieces your opponent could capture next turn.",
-          "overview": "Identify pieces the opponent could capture on their next turn. Mark both the threatened piece and the landing square that makes the jump possible.",
-          "status": "planned"
+          "objective": "Recognize threats and rescue or protect the threatened piece.",
+          "overview": "Move threatened pieces to safety, including against a king's backward jump. Watch an opponent expose a target, exploit it, and practice blocking a capture landing.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-009.json"
         },
         {
           "id": "lesson-010",
           "number": 10,
           "name": "Before You Move",
           "objective": "Check whether moving one piece exposes another to capture.",
-          "overview": "Show how moving one piece can expose another. Preview a candidate move and identify any new captures it permits.",
-          "status": "planned"
+          "overview": "Improve threatened positions without vacating protective blockers. Choose safe moves, watch the opponent's reply, and play the capture that a sound position enables.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-010.json"
         },
         {
           "id": "lesson-011",
           "number": 11,
           "name": "Find a Safe Square",
           "objective": "Choose a legal destination that avoids an immediate material loss.",
-          "overview": "Compare legal destinations for the same piece. Choose a destination that avoids an immediate material loss in the supplied position.",
-          "status": "planned"
+          "overview": "Compare destinations against the opponent's reply and move to safety. Use a king's backward escape to improve a cramped position, then exploit a visibly exposed piece with a compulsory capture.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-011.json"
         },
         {
           "id": "lesson-012",
           "number": 12,
           "name": "Protecting a Piece",
           "objective": "Protect your pieces through support and blocked jump destinations.",
-          "overview": "Introduce support through recaptures and denying jump landing squares. Show why merely standing beside a friendly piece does not guarantee protection.",
-          "status": "planned"
+          "overview": "Block jump landing squares or move a supporter into a real recapture position. Watch the opponent's capture and perform the recapture you arranged to complete the protection.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-012.json"
         },
         {
           "id": "lesson-013",
           "number": 13,
           "name": "Count the Exchange",
           "objective": "Count each side’s losses through a capture and recapture.",
-          "overview": "Follow a short capture-and-recapture sequence and count what each side loses. Distinguish equal exchanges from losing trades.",
-          "status": "planned"
+          "overview": "Watch the moves that create exchanges, then play sound captures and recaptures. Count clean gains, equal trades, favorable double jumps, and man-for-king exchanges.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-013.json"
         },
         {
           "id": "lesson-014",
           "number": 14,
           "name": "Beware the Second Jump",
-          "objective": "See the full damage hidden behind an opponent’s first jump.",
-          "overview": "Show how a seemingly harmless capture can become a multiple jump. Identify the full damage before deciding whether a move is safe.",
-          "status": "planned"
+          "objective": "Break an opponent’s capture route with a real defensive move.",
+          "overview": "Read the shown capture threats, then rescue a target, block a landing, or preserve an existing blocker. Stop both king branches and prevent a two-for-one loss that a late recapture cannot repair.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-014.json"
         },
         {
           "id": "lesson-015",
           "number": 15,
           "name": "The Safety Check",
-          "objective": "Check forced captures, the opponent’s reply, and the resulting exchange.",
-          "overview": "Combine the section into a repeatable routine: check compulsory captures, inspect the opponent’s reply, and count the resulting exchange. Apply it to mixed positions.",
-          "status": "planned"
+          "objective": "Perform a four-step safety check before choosing and playing a move.",
+          "overview": "Watch a worked example of the four-step check: check your captures, test a candidate move, inspect their complete reply, then count and decide. Apply the routine through real moves, judge a supported exchange with the lesson answer cards, and play its recapture.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-015.json"
         },
         {
           "id": "lesson-016",
           "number": 16,
           "name": "Challenge: Hold Your Ground",
-          "objective": "Defend short positions without preventable material losses.",
-          "overview": "Play short defensive positions and a brief continuation. Succeed by avoiding preventable material losses, rather than by defeating the opponent outright.",
-          "status": "planned"
+          "objective": "Win a full guided match using the Unit 2 safety check, then review the unit.",
+          "overview": "Play a complete game from the starting position with contextual safety guidance and rules from Units 1 and 2. Win, then complete the Unit 2 recap.",
+          "status": "available",
+          "definitionAsset": "assets/learn/lessons/lesson-016.json"
         }
       ]
     },

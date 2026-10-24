@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 2, "id": "lesson-012", "number": 12, "name": "Protecting a Piece",
+  "exercises": [
+    {
+      "id": "protect-1", "title": "Protection by recapture", "instruction": "Watch Black take the advanced man, then recapture as White.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 0, "column": 7}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 1}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "openingTurns": [
+        {"origin": {"row": 2, "column": 1}, "landings": [{"row": 4, "column": 3}], "captures": [{"row": 3, "column": 2}]}
+      ], "openingPauseMs": 550, "turns": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}], "captures": [{"row": 4, "column": 3}]}
+      ]},
+      "feedback": {"opening": "Black takes the advanced man. Watch where the attacker lands.", "initial": "Now jump the attacker with White's supporting man.", "selected": "Complete White's legal recapture.", "success": "White recaptured the attacker. Each side lost one man: the supporter made this an equal exchange.", "invalidPiece": "Use the white man that can recapture.", "invalidDestination": "Choose the compulsory recapture landing."}
+    },
+    {
+      "id": "protect-2", "title": "Nearby is not enough", "instruction": "Move White's king into a real recapture position to support the advanced man.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 1}, "side": "white", "rank": "king"},
+        {"square": {"row": 6, "column": 1}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 4, "column": 1}, "landings": [{"row": 5, "column": 2}], "captures": []}
+      ], "opponentReply": {"origin": {"row": 2, "column": 1}, "landings": [{"row": 4, "column": 3}], "captures": [{"row": 3, "column": 2}]}, "opponentPauseMs": 550,
+      "followUps": [{
+        "afterTurn": {"origin": {"row": 4, "column": 1}, "landings": [{"row": 5, "column": 2}], "captures": []},
+        "instruction": "Recapture Black's attacker with the king you moved into support.", "acceptance": "exactLegalSet",
+        "turns": [{"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}], "captures": [{"row": 4, "column": 3}]}],
+        "feedback": {"initial": "The king has a real recapture now. Play it to complete the protection.", "selected": "Jump the attacker with White's king.", "success": "White's king recaptured the attacker. Each side lost one man: concrete support prevented a clean loss.", "invalidPiece": "Use the supporting white king.", "invalidDestination": "Choose the recapture landing."}
+      }]},
+      "feedback": {"initial": "The king is nearby, but cannot yet recapture an attacker landing beyond the advanced man.", "selected": "Work backward from Black's landing to find the king's supporting square.", "awaitingReply": "Watch Black's compulsory capture, then use the support you created.", "success": "White's king recaptured the attacker. Each side lost one man: concrete support prevented a clean loss.", "goalMiss": "Move the king onto the rear diagonal of Black's landing. That move does not give the king a recapture.", "invalidPiece": "Select a movable white piece.", "invalidDestination": "Choose a legal diagonal step."}
+    },
+    {
+      "id": "protect-3", "title": "Protection by blocking", "instruction": "Move Black's edge piece while keeping the central capture landing blocked.", "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 4}, "side": "black", "rank": "man"},
+        {"square": {"row": 4, "column": 5}, "side": "black", "rank": "man"},
+        {"square": {"row": 5, "column": 6}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 7}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 1, "column": 0}, "landings": [{"row": 2, "column": 1}], "captures": []}
+      ]},
+      "feedback": {"initial": "White cannot jump the advanced black man while the landing behind it is occupied.", "selected": "Advance the edge piece without moving either central defender.", "success": "The edge piece advanced and the landing stayed blocked. White still has no capture.", "goalMiss": "Keep the central pair in place and move the edge piece. Vacating the blocker can expose its teammate.", "invalidPiece": "Choose a movable black piece.", "invalidDestination": "Choose a legal diagonal step."}
+    },
+    {
+      "id": "protect-4", "title": "Block the landing", "instruction": "Move White's rear man onto Black's required landing square.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 4}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 5, "column": 4}, "landings": [{"row": 4, "column": 3}], "captures": []}
+      ]},
+      "feedback": {"initial": "Deny the square Black would need beyond White's advanced man.", "selected": "Use the rear man to block the capture landing.", "success": "White physically occupied the landing. Black's jump is no longer available.", "goalMiss": "Move the rear man onto the square beyond its teammate. That move does not block Black's landing.", "invalidPiece": "Select a movable white piece.", "invalidDestination": "Choose a legal step."}
+    },
+    {
+      "id": "protect-5", "title": "Place the supporter", "instruction": "Move White's central rear man into position to recapture Black's attacker.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 1}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 5}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 6, "column": 3}, "landings": [{"row": 5, "column": 2}], "captures": []},
+        {"origin": {"row": 6, "column": 3}, "landings": [{"row": 5, "column": 4}], "captures": []}
+      ], "opponentReply": {"origin": {"row": 2, "column": 1}, "landings": [{"row": 4, "column": 3}], "captures": [{"row": 3, "column": 2}]}, "opponentPauseMs": 550,
+      "followUps": [
+        {"afterTurn": {"origin": {"row": 6, "column": 3}, "landings": [{"row": 5, "column": 2}], "captures": []},
+         "instruction": "Use the supporter you placed to recapture Black's attacker.", "acceptance": "exactLegalSet",
+         "turns": [{"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}], "captures": [{"row": 4, "column": 3}]}],
+         "feedback": {"initial": "Now finish the exchange with the supporting man.", "selected": "Complete the recapture.", "success": "The supporter recaptured Black's attacker. Both setup choices lead to one man lost by each side.", "invalidPiece": "Use the white man that can recapture.", "invalidDestination": "Choose the recapture landing."}},
+        {"afterTurn": {"origin": {"row": 6, "column": 3}, "landings": [{"row": 5, "column": 4}], "captures": []},
+         "instruction": "Use the supporter you placed to recapture Black's attacker.", "acceptance": "exactLegalSet",
+         "turns": [{"origin": {"row": 5, "column": 4}, "landings": [{"row": 3, "column": 2}], "captures": [{"row": 4, "column": 3}]}],
+         "feedback": {"initial": "Now finish the exchange with the supporting man.", "selected": "Complete the recapture.", "success": "The supporter recaptured Black's attacker. Both setup choices lead to one man lost by each side.", "invalidPiece": "Use the white man that can recapture.", "invalidDestination": "Choose the recapture landing."}}
+      ]},
+      "feedback": {"initial": "Keep the outer rear pieces in place. Either diagonal step by the central rear man can supply support.", "selected": "Position the central rear man next to Black's eventual landing.", "awaitingReply": "Black takes the advanced man. Next, play the recapture you arranged.", "success": "The supporter recaptured Black's attacker. Both setup choices lead to one man lost by each side.", "goalMiss": "Move the central rear man. The outer rear pieces must stay to block a second jump and preserve the recapture.", "invalidPiece": "Select a movable white piece.", "invalidDestination": "Choose a legal diagonal step."}
+    }
+  ]
+}

@@ -14,7 +14,10 @@ void main() {
         .where((lesson) => lesson.definitionAsset != null)
         .toList();
 
-    expect(available.map((lesson) => lesson.number), [1, 2, 3, 4, 5, 6, 7, 8]);
+    expect(
+      available.map((lesson) => lesson.number),
+      List.generate(16, (i) => i + 1),
+    );
 
     final definitions = <LessonDefinition>[];
     for (final lesson in available) {
@@ -30,14 +33,28 @@ void main() {
       5,
       5,
       0,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      0,
     ]);
+    expect(definitions[7], isA<GuidedMatchDefinition>());
     expect(definitions.last, isA<GuidedMatchDefinition>());
-    final challenge = definitions.last as GuidedMatchDefinition;
+    final challenge = definitions[7] as GuidedMatchDefinition;
     expect(challenge.humanSide, Side.black);
     expect(challenge.aiSkill, 0);
     expect(
       challenge.review.map((item) => item.concept).toSet(),
-      ReviewConcept.values.toSet(),
+      ReviewConcept.values.where((concept) => concept.unit == 1).toSet(),
+    );
+    final unitTwoChallenge = definitions.last as GuidedMatchDefinition;
+    expect(
+      unitTwoChallenge.review.map((item) => item.concept).toSet(),
+      ReviewConcept.values.where((concept) => concept.unit == 2).toSet(),
     );
     expect(
       definitions.first.exercises.last.boardSource,

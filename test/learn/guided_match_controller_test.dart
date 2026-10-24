@@ -11,19 +11,23 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   late GuidedMatchDefinition definition;
+  late GuidedMatchDefinition unitTwoDefinition;
   setUp(() async {
     final catalog = await LessonAssetLoader().loadCatalog(
       'assets/learn/catalog.json',
     );
     definition = catalog.definitions['lesson-008']! as GuidedMatchDefinition;
+    unitTwoDefinition =
+        catalog.definitions['lesson-016']! as GuidedMatchDefinition;
   });
 
   GuidedMatchController create({
     GameState? state,
     Future<void> Function(MatchRecord record)? onAttemptCompleted,
+    GuidedMatchDefinition? lessonDefinition,
   }) {
     final controller = GuidedMatchController(
-      definition: definition,
+      definition: lessonDefinition ?? definition,
       initialState: state,
       reducedMotion: true,
       minimumAiTurnDuration: Duration.zero,
@@ -34,6 +38,26 @@ void main() {
     addTearDown(controller.dispose);
     return controller;
   }
+
+  test('Unit 2 match records safety concepts during play', () async {
+    final controller = create(
+      lessonDefinition: unitTwoDefinition,
+      state: GameState.custom(
+        sideToMove: Side.black,
+        pieces: {
+          const Square(2, 1): const Piece.blackMan(),
+          const Square(3, 2): const Piece.whiteMan(),
+        },
+      ),
+    );
+
+    await controller.begin();
+    expect(controller.encountered, contains(ReviewConcept.safetyCheck));
+    await controller.tapSquare(const Square(2, 1));
+    await controller.tapSquare(const Square(4, 3));
+    expect(controller.encountered, contains(ReviewConcept.threatAnatomy));
+    expect(controller.encountered, contains(ReviewConcept.exchanges));
+  });
 
   test('starts with 24 pieces and waits for the introduction', () async {
     final controller = create();

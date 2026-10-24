@@ -80,8 +80,19 @@ class LessonAssetLoader {
           definition.exercises.isEmpty) {
         throw const FormatException('available lesson has no exercises');
       }
+      if (definition is! GuidedMatchDefinition &&
+          definition.number >= 9 &&
+          definition.number <= 15 &&
+          definition.exercises.length != 5) {
+        throw const FormatException(
+          'Unit 2 standard lessons require exactly five exercises',
+        );
+      }
       for (final exercise in definition.exercises) {
-        _validateExercise(exercise);
+        _validateExercise(
+          exercise,
+          shortPaths: definition.number >= 9 && definition.number <= 15,
+        );
       }
       return definition;
     } on FormatException catch (error) {
@@ -133,10 +144,18 @@ GuidedMatchDefinition _parseGuidedMatch(Map<String, Object?> json) {
       body: _requiredText(item, 'body'),
     );
   }).toList();
-  if (review.length != ReviewConcept.values.length ||
+  final unit = ((json['number']! as int) - 1) ~/ 8 + 1;
+  final requiredConcepts = ReviewConcept.values
+      .where((concept) => concept.unit == unit)
+      .toSet();
+  if (review.length != requiredConcepts.length ||
       review.map((item) => item.concept).toSet().length !=
-          ReviewConcept.values.length) {
-    throw const FormatException('review must cover every Unit 1 concept once');
+          requiredConcepts.length ||
+      !review
+          .map((item) => item.concept)
+          .toSet()
+          .containsAll(requiredConcepts)) {
+    throw FormatException('review must cover every Unit $unit concept once');
   }
   return GuidedMatchDefinition(
     id: _requiredText(json, 'id'),
@@ -176,6 +195,21 @@ LessonExerciseDefinition _parseExercise(Map<String, Object?> json) {
     interaction['type']! as String,
   );
   final opponentReply = interaction['opponentReply'];
+  if (type == LessonInteractionType.turn &&
+      !const [
+        'exactLegalSet',
+        'allLegal',
+        'legalSubset',
+      ].contains(interaction['acceptance'])) {
+    throw const FormatException('turn requires a supported acceptance mode');
+  }
+  if (type != LessonInteractionType.turn &&
+      (interaction.containsKey('openingTurns') ||
+          interaction.containsKey('followUps'))) {
+    throw const FormatException(
+      'opening turns and follow-ups require a turn interaction',
+    );
+  }
   final outcome = json['outcome'];
   return LessonExerciseDefinition(
     id: json['id']! as String,
@@ -196,6 +230,8 @@ LessonExerciseDefinition _parseExercise(Map<String, Object?> json) {
           (feedback['selected'] as String?) ??
           'Selected. Choose a highlighted destination.',
       awaitingReply: feedback['awaitingReply'] as String?,
+      goalMiss: (feedback['goalMiss'] as String?) ?? '',
+      opening: feedback['opening'] as String?,
     ),
     placementPiece: type == LessonInteractionType.placement
         ? Piece.fromJson((interaction['piece']! as Map).cast<String, Object?>())
@@ -204,6 +240,15 @@ LessonExerciseDefinition _parseExercise(Map<String, Object?> json) {
         ? Set.unmodifiable((interaction['targets']! as List).map(_parseSquare))
         : const {},
     acceptAllLegalTurns: interaction['acceptance'] == 'allLegal',
+    acceptLegalSubset: interaction['acceptance'] == 'legalSubset',
+    openingTurns: List.unmodifiable(
+      ((interaction['openingTurns'] as List?) ?? const []).map(
+        (value) => Turn.fromJson((value as Map).cast<String, Object?>()),
+      ),
+    ),
+    openingPause: Duration(
+      milliseconds: (interaction['openingPauseMs'] as int?) ?? 550,
+    ),
     authoredTurns: List.unmodifiable(
       ((interaction['turns'] as List?) ?? const []).map(
         (value) => Turn.fromJson((value as Map).cast<String, Object?>()),
@@ -214,6 +259,52 @@ LessonExerciseDefinition _parseExercise(Map<String, Object?> json) {
         : Turn.fromJson((opponentReply as Map).cast<String, Object?>()),
     opponentPause: Duration(
       milliseconds: (interaction['opponentPauseMs'] as int?) ?? 0,
+    ),
+    followUps: List.unmodifiable(
+      ((interaction['followUps'] as List?) ?? const []).map((value) {
+        final followUp = (value as Map).cast<String, Object?>();
+        if (followUp.containsKey('followUps') ||
+            followUp.containsKey('openingTurns')) {
+          throw const FormatException(
+            'follow-ups allow only one additional learner phase',
+          );
+        }
+        if (!const [
+          'exactLegalSet',
+          'legalSubset',
+          'allLegal',
+        ].contains(followUp['acceptance'])) {
+          throw const FormatException(
+            'follow-up requires a supported acceptance mode',
+          );
+        }
+        final reply = followUp['opponentReply'];
+        return LessonTurnFollowUpDefinition(
+          afterTurn: Turn.fromJson(
+            (followUp['afterTurn']! as Map).cast<String, Object?>(),
+          ),
+          phase: LessonTurnPhaseDefinition(
+            instruction: _requiredText(followUp, 'instruction'),
+            acceptAllLegalTurns: followUp['acceptance'] == 'allLegal',
+            acceptLegalSubset: followUp['acceptance'] == 'legalSubset',
+            authoredTurns: List.unmodifiable(
+              ((followUp['turns'] as List?) ?? const []).map(
+                (value) =>
+                    Turn.fromJson((value as Map).cast<String, Object?>()),
+              ),
+            ),
+            opponentReply: reply == null
+                ? null
+                : Turn.fromJson((reply as Map).cast<String, Object?>()),
+            opponentPause: Duration(
+              milliseconds: (followUp['opponentPauseMs'] as int?) ?? 0,
+            ),
+            feedback: _parsePhaseFeedback(
+              (followUp['feedback']! as Map).cast<String, Object?>(),
+            ),
+          ),
+        );
+      }),
     ),
     choiceOptions: type == LessonInteractionType.choice
         ? List.unmodifiable(
@@ -231,13 +322,113 @@ LessonExerciseDefinition _parseExercise(Map<String, Object?> json) {
           )
         : const [],
     correctChoiceId: interaction['correctOptionId'] as String?,
+    threat: _parseThreat(json['threat']),
+    preparation: List.unmodifiable(
+      ((json['preparation'] as List?) ?? const []).asMap().entries.map((entry) {
+        final stage = (entry.value as Map).cast<String, Object?>();
+        if (stage.containsKey('preparation')) {
+          throw const FormatException('preparation stages cannot be nested');
+        }
+        return LessonPreparationStage(
+          question: _parseExercise({
+            ...stage,
+            'id': '${json['id']}-preparation-${entry.key}',
+            'title': json['title'],
+            'threat': null,
+            'perspective': json['perspective'],
+            'board': json['board'],
+          }),
+          previewTurns: List.unmodifiable(
+            ((stage['previewTurns'] as List?) ?? const []).map(
+              (value) => Turn.fromJson((value as Map).cast<String, Object?>()),
+            ),
+          ),
+          threat: _parseThreat(stage['threat']),
+        );
+      }),
+    ),
+    squareTargets: type == LessonInteractionType.squareSelection
+        ? List.unmodifiable((interaction['targets']! as List).map(_parseSquare))
+        : const [],
     outcome: outcome == null
         ? null
         : GameResult.fromJson((outcome as Map).cast<String, Object?>()),
   );
 }
 
-void _validateExercise(LessonExerciseDefinition exercise) {
+LessonThreatDefinition? _parseThreat(Object? value) {
+  if (value == null) return null;
+  final json = (value as Map).cast<String, Object?>();
+  return LessonThreatDefinition(
+    label: _requiredText(json, 'label'),
+    routes: List.unmodifiable(
+      (json['routes']! as List).map(
+        (value) => Turn.fromJson((value as Map).cast<String, Object?>()),
+      ),
+    ),
+    afterTurn: json['afterTurn'] == null
+        ? null
+        : Turn.fromJson((json['afterTurn'] as Map).cast<String, Object?>()),
+  );
+}
+
+void _validateThreat(
+  String id,
+  LessonThreatDefinition? threat,
+  GameState state,
+  Side learner,
+) {
+  if (threat == null) return;
+  const engine = CheckersEngine();
+  if (threat.routes.isEmpty) {
+    throw FormatException('$id: threat requires capture routes');
+  }
+  if (threat.afterTurn case final candidate?) {
+    if (state.sideToMove != learner ||
+        !engine.legalTurns(state).contains(candidate)) {
+      throw FormatException(
+        '$id: conditional threat requires an engine legal learner move',
+      );
+    }
+    state = engine.applyTurn(state, candidate);
+  }
+  final opponent = GameState.custom(
+    pieces: state.pieces,
+    sideToMove: learner.opponent,
+  );
+  for (final route in threat.routes) {
+    if (!route.isCapture || !engine.legalTurns(opponent).contains(route)) {
+      throw FormatException(
+        '$id: threat route must be a complete engine legal opponent capture',
+      );
+    }
+  }
+}
+
+LessonFeedbackDefinition _parsePhaseFeedback(Map<String, Object?> feedback) =>
+    LessonFeedbackDefinition(
+      initial: _requiredText(feedback, 'initial'),
+      success: _requiredText(feedback, 'success'),
+      selected:
+          (feedback['selected'] as String?) ??
+          'Selected. Choose a highlighted destination.',
+      invalidPiece: (feedback['invalidPiece'] as String?) ?? '',
+      invalidDestination: (feedback['invalidDestination'] as String?) ?? '',
+      goalMiss: (feedback['goalMiss'] as String?) ?? '',
+      awaitingReply: feedback['awaitingReply'] as String?,
+    );
+
+void _validateExercise(
+  LessonExerciseDefinition exercise, {
+  bool shortPaths = false,
+}) {
+  if ((exercise.preparation.isNotEmpty || exercise.threat != null) &&
+      (exercise.interactionType != LessonInteractionType.turn ||
+          exercise.boardSource == LessonBoardSource.previousExerciseResult)) {
+    throw FormatException(
+      '${exercise.id}: guidance requires a move exercise with an explicit board',
+    );
+  }
   for (final square in exercise.initialPieces.keys) {
     if (!square.isPlayable) {
       throw FormatException('${exercise.id}: $square is not playable');
@@ -292,48 +483,217 @@ void _validateExercise(LessonExerciseDefinition exercise) {
     _validateOutcome(exercise);
     return;
   }
-  if (exercise.boardSource == LessonBoardSource.previousExerciseResult) return;
-  final state = GameState.custom(
+  if (exercise.interactionType == LessonInteractionType.squareSelection) {
+    if (exercise.squareTargets.isEmpty || exercise.squareTargets.length > 3) {
+      throw FormatException(
+        '${exercise.id}: square selection requires one to three targets',
+      );
+    }
+    if (exercise.squareTargets.any((square) => !square.isPlayable)) {
+      throw FormatException('${exercise.id}: square target must be playable');
+    }
+    return;
+  }
+  if (exercise.interactionType == LessonInteractionType.observation) return;
+  if (exercise.openingPause.isNegative || exercise.opponentPause.isNegative) {
+    throw FormatException('${exercise.id}: pauses must not be negative');
+  }
+  if (exercise.acceptLegalSubset && exercise.feedback.goalMiss.trim().isEmpty) {
+    throw FormatException(
+      '${exercise.id}: legal subset requires goalMiss feedback',
+    );
+  }
+  if (exercise.openingTurns.isNotEmpty &&
+      (exercise.feedback.opening?.trim().isEmpty ?? true)) {
+    throw FormatException(
+      '${exercise.id}: opening turns require opening feedback',
+    );
+  }
+  if (exercise.opponentReply != null &&
+      (exercise.feedback.awaitingReply?.trim().isEmpty ?? true)) {
+    throw FormatException(
+      '${exercise.id}: opponent reply requires awaitingReply feedback',
+    );
+  }
+  if (exercise.boardSource == LessonBoardSource.previousExerciseResult) {
+    if (exercise.openingTurns.isNotEmpty ||
+        exercise.acceptLegalSubset ||
+        exercise.followUps.isNotEmpty) {
+      throw FormatException(
+        '${exercise.id}: move goals and openings require an explicit board',
+      );
+    }
+    return;
+  }
+  var state = GameState.custom(
     pieces: exercise.initialPieces,
     sideToMove: exercise.sideToMove,
   );
-  final legalTurns = const CheckersEngine().legalTurns(state);
-  if (exercise.acceptAllLegalTurns) {
-    if (legalTurns.isEmpty) {
+  const engine = CheckersEngine();
+  for (final turn in exercise.openingTurns) {
+    if (shortPaths && state.sideToMove == exercise.perspective) {
       throw FormatException(
-        '${exercise.id}: position has no engine legal turns',
+        '${exercise.id}: opening turns must belong to the opponent',
       );
     }
-  } else if (!_sameTurns(legalTurns, exercise.authoredTurns)) {
+    if (!engine.legalTurns(state).contains(turn)) {
+      throw FormatException(
+        '${exercise.id}: opening turn must be engine legal',
+      );
+    }
+    state = engine.applyTurn(state, turn);
+  }
+  if ((shortPaths || exercise.followUps.isNotEmpty) &&
+      state.sideToMove != exercise.perspective) {
     throw FormatException(
-      '${exercise.id}: authored turns must equal the engine legal turns',
+      '${exercise.id}: learner phases must use the perspective side',
     );
   }
-  final reply = exercise.opponentReply;
+  final accepted = _validateTurnPhase(
+    exercise.id,
+    exercise.turnPhase,
+    state,
+    shortPaths: shortPaths,
+  );
+  _validateThreat(exercise.id, exercise.threat, state, exercise.perspective);
+  for (final stage in exercise.preparation) {
+    if (!const [
+      LessonInteractionType.choice,
+      LessonInteractionType.observation,
+    ].contains(stage.question.interactionType)) {
+      throw FormatException(
+        '${exercise.id}: preparation requires a choice or passive observation',
+      );
+    }
+    _validateExercise(stage.question);
+    var preview = state;
+    for (final turn in stage.previewTurns) {
+      if (!engine.legalTurns(preview).contains(turn)) {
+        throw FormatException(
+          '${exercise.id}: preview turn must be engine legal',
+        );
+      }
+      preview = engine.applyTurn(preview, turn);
+    }
+    _validateThreat(exercise.id, stage.threat, preview, exercise.perspective);
+  }
+  if (exercise.followUps.isNotEmpty) {
+    final keys = exercise.followUps
+        .map((followUp) => followUp.afterTurn)
+        .toSet();
+    if (exercise.opponentReply == null ||
+        keys.length != exercise.followUps.length ||
+        keys.length != accepted.length ||
+        !accepted.every(keys.contains)) {
+      throw FormatException(
+        '${exercise.id}: follow-ups require a reply and exactly one branch per accepted turn',
+      );
+    }
+  }
+  final finalStates = <GameState>[];
+  for (final turn in accepted) {
+    var after = engine.applyTurn(state, turn);
+    if (exercise.opponentReply case final reply?) {
+      after = engine.applyTurn(after, reply);
+    }
+    if (exercise.followUps.isEmpty) {
+      finalStates.add(after);
+      continue;
+    }
+    if (after.sideToMove != exercise.perspective) {
+      throw FormatException(
+        '${exercise.id}: follow-up must return control to the learner',
+      );
+    }
+    final phase = exercise.followUps
+        .firstWhere((followUp) => followUp.afterTurn == turn)
+        .phase;
+    for (final payoff in _validateTurnPhase(
+      exercise.id,
+      phase,
+      after,
+      shortPaths: shortPaths,
+    )) {
+      var finalState = engine.applyTurn(after, payoff);
+      if (phase.opponentReply case final reply?) {
+        finalState = engine.applyTurn(finalState, reply);
+      }
+      finalStates.add(finalState);
+    }
+  }
+  if (shortPaths &&
+      finalStates.any(
+        (state) =>
+            state.sideToMove == exercise.perspective &&
+            engine.legalTurns(state).any((turn) => turn.isCapture),
+      )) {
+    throw FormatException(
+      '${exercise.id}: exercise must include the enabled learner capture',
+    );
+  }
+  _validateOutcome(exercise, finalStates: finalStates);
+}
+
+List<Turn> _validateTurnPhase(
+  String id,
+  LessonTurnPhaseDefinition phase,
+  GameState state, {
+  required bool shortPaths,
+}) {
+  const engine = CheckersEngine();
+  if (phase.opponentPause.isNegative) {
+    throw FormatException('$id: pauses must not be negative');
+  }
+  if (phase.acceptLegalSubset && phase.feedback.goalMiss.trim().isEmpty) {
+    throw FormatException('$id: legal subset requires goalMiss feedback');
+  }
+  if (phase.opponentReply != null &&
+      (phase.feedback.awaitingReply?.trim().isEmpty ?? true)) {
+    throw FormatException(
+      '$id: opponent reply requires awaitingReply feedback',
+    );
+  }
+  final legalTurns = engine.legalTurns(state);
+  if (legalTurns.isEmpty) {
+    throw FormatException('$id: learner phase has no engine legal turns');
+  }
+  if (phase.acceptLegalSubset) {
+    if (phase.authoredTurns.isEmpty ||
+        phase.authoredTurns.toSet().length != phase.authoredTurns.length ||
+        !phase.authoredTurns.every(legalTurns.contains)) {
+      throw FormatException(
+        '$id: goal turns must be a nonempty subset of engine legal turns',
+      );
+    }
+  } else if (!phase.acceptAllLegalTurns &&
+      !_sameTurns(legalTurns, phase.authoredTurns)) {
+    throw FormatException(
+      '$id: authored turns must equal the engine legal turns',
+    );
+  }
+  final accepted = phase.acceptAllLegalTurns ? legalTurns : phase.authoredTurns;
+  if (shortPaths && accepted.any((turn) => turn.landings.length > 2)) {
+    throw FormatException(
+      '$id: each learner phase allows at most three board taps',
+    );
+  }
+  final reply = phase.opponentReply;
   if (reply != null) {
-    if (exercise.authoredTurns.length != 1) {
-      throw FormatException(
-        '${exercise.id}: opponent reply requires one player turn',
-      );
-    }
-    final replyState = const CheckersEngine().applyTurn(
-      state,
-      exercise.authoredTurns.single,
-    );
-    final replies = const CheckersEngine().legalTurns(replyState);
-    if (replies.length != 1 || replies.single != reply) {
-      throw FormatException(
-        '${exercise.id}: opponent reply must be the only engine legal turn',
-      );
+    for (final turn in accepted) {
+      final replyState = engine.applyTurn(state, turn);
+      if (!engine.legalTurns(replyState).contains(reply)) {
+        throw FormatException(
+          '$id: opponent reply must be engine legal after every accepted turn',
+        );
+      }
     }
   }
-  _validateOutcome(exercise, state: state, legalTurns: legalTurns);
+  return accepted;
 }
 
 void _validateOutcome(
   LessonExerciseDefinition exercise, {
-  GameState? state,
-  List<Turn>? legalTurns,
+  List<GameState>? finalStates,
 }) {
   final outcome = exercise.outcome;
   if (outcome == null) return;
@@ -346,12 +706,7 @@ void _validateOutcome(
     );
   }
   if (exercise.interactionType != LessonInteractionType.turn) return;
-  for (final turn in legalTurns!) {
-    var resultState = const CheckersEngine().applyTurn(state!, turn);
-    final reply = exercise.opponentReply;
-    if (reply != null) {
-      resultState = const CheckersEngine().applyTurn(resultState, reply);
-    }
+  for (final resultState in finalStates!) {
     if (resultState.result != outcome) {
       throw FormatException(
         '${exercise.id}: outcome does not match the engine result',

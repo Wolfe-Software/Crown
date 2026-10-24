@@ -490,7 +490,7 @@ void main() {
     );
     await tester.tap(tile(9));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(FilledButton, 'COMING SOON'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, 'START'), findsOneWidget);
   });
 
   testWidgets(

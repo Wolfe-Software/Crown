@@ -29,44 +29,96 @@ class LessonSessionController extends ChangeNotifier {
   late Map<Square, Piece> _pieces;
   Square? _turnOrigin;
   final List<Square> _landingPrefix = [];
+  final List<Square> _selectedAnswerSquares = [];
   JumpAnimation? _activeJump;
   Turn? _lastTurn;
   late String _feedback;
   bool _exerciseComplete = false;
   bool _lessonComplete = false;
   bool _awaitingOpponent = false;
+  bool _awaitingOpening = false;
   bool _disposed = false;
   Timer? _timer;
+  LessonTurnPhaseDefinition? _followUpPhase;
+  LessonTurnPhaseDefinition? _pendingFollowUp;
+  int _preparationIndex = 0;
+  bool _preparationComplete = false;
+  bool _demonstrating = false;
+  GameState? _previewState;
+  Map<Square, Piece>? _previewPieces;
+
+  LessonPreparationStage? get preparationStage =>
+      !_awaitingOpening && _preparationIndex < exercise.preparation.length
+      ? exercise.preparation[_preparationIndex]
+      : null;
+  LessonExerciseDefinition get _question =>
+      preparationStage?.question ?? exercise;
+  LessonInteractionType get interactionType => _question.interactionType;
+  bool get canContinuePreparation =>
+      !_demonstrating &&
+      preparationStage != null &&
+      (_preparationComplete ||
+          interactionType == LessonInteractionType.observation);
+  LessonThreatDefinition? get visibleThreat =>
+      _awaitingOpening ||
+          _awaitingOpponent ||
+          _exerciseComplete ||
+          _activeJump != null ||
+          _demonstrating ||
+          _landingPrefix.isNotEmpty ||
+          _followUpPhase != null
+      ? null
+      : preparationStage != null
+      ? preparationStage!.threat
+      : exercise.threat;
+  String? get previewLabel => preparationStage?.previewTurns.isNotEmpty == true
+      ? 'WORKED EXAMPLE — NOT YOUR MOVE'
+      : visibleThreat?.label;
+  Map<Square, Piece> get displayedPieces {
+    return _previewPieces == null ? pieces : Map.unmodifiable(_previewPieces!);
+  }
 
   LessonExerciseDefinition get exercise => definition.exercises[_exerciseIndex];
   String get exerciseId => exercise.id;
   int get exerciseNumber => _exerciseIndex + 1;
   int get exerciseCount => definition.exercises.length;
   String get title => exercise.title;
-  String get instruction => exercise.instruction;
+  String get instruction =>
+      preparationStage?.question.instruction ?? turnPhase.instruction;
+  LessonTurnPhaseDefinition get turnPhase =>
+      _followUpPhase ?? exercise.turnPhase;
+  int get playerPhaseNumber => _followUpPhase == null ? 1 : 2;
+  List<Turn> get acceptedTurns =>
+      turnPhase.acceptAllLegalTurns ? legalTurns : turnPhase.authoredTurns;
   Side get perspectiveSide => exercise.perspective;
   Side get sideToMove => _state.sideToMove;
   Map<Square, Piece> get pieces => Map.unmodifiable(_pieces);
-  Square? get selectedSquare =>
-      _landingPrefix.isEmpty ? _turnOrigin : _landingPrefix.last;
+  Square? get selectedSquare => _selectedAnswerSquares.isNotEmpty
+      ? _selectedAnswerSquares.last
+      : _landingPrefix.isEmpty
+      ? _turnOrigin
+      : _landingPrefix.last;
+  List<Square> get selectedAnswerSquares =>
+      List.unmodifiable(_selectedAnswerSquares);
   JumpAnimation? get activeJump => _activeJump;
   Turn? get lastTurn => _lastTurn;
   String get feedback => _feedback;
   bool get exerciseComplete => _exerciseComplete;
   bool get lessonComplete => _lessonComplete;
+  bool get acceptsInput => _acceptsInput;
   bool get isFinalExercise => _exerciseIndex == exerciseCount - 1;
-  Duration get opponentPause => exercise.opponentPause;
+  Duration get opponentPause => turnPhase.opponentPause;
   Set<Square> get placementTargets => exercise.placementTargets;
   List<LessonChoiceOptionDefinition> get choiceOptions =>
-      exercise.choiceOptions;
+      _question.choiceOptions;
   GameResult? get visibleOutcome => _exerciseComplete ? exercise.outcome : null;
   List<Turn> get recordedPlayerTurns => List.unmodifiable(_recordedPlayerTurns);
 
   List<Turn> get legalTurns {
-    if (exercise.interactionType != LessonInteractionType.turn) return const [];
-    return exercise.acceptAllLegalTurns
-        ? _engine.legalTurns(_state)
-        : exercise.authoredTurns;
+    if (interactionType != LessonInteractionType.turn || _awaitingOpening) {
+      return const [];
+    }
+    return _engine.legalTurns(_state);
   }
 
   List<Turn> get _selectedTurns {
@@ -93,32 +145,60 @@ class LessonSessionController extends ChangeNotifier {
   }
 
   bool get _acceptsInput =>
+      !_disposed &&
       !_exerciseComplete &&
       !_lessonComplete &&
+      !_awaitingOpening &&
       !_awaitingOpponent &&
+      !_preparationComplete &&
+      !_demonstrating &&
+      interactionType != LessonInteractionType.observation &&
       _activeJump == null;
 
   void tapSquare(Square square) {
     if (!_acceptsInput) return;
-    if (exercise.interactionType == LessonInteractionType.placement) {
+    if (interactionType == LessonInteractionType.placement) {
       _placePiece(square);
-    } else if (exercise.interactionType == LessonInteractionType.turn) {
+    } else if (interactionType == LessonInteractionType.turn) {
       _tapTurnSquare(square);
+    } else if (interactionType == LessonInteractionType.squareSelection) {
+      _selectSquare(square);
     }
   }
 
-  void selectChoice(String optionId) {
-    if (!_acceptsInput ||
-        exercise.interactionType != LessonInteractionType.choice) {
+  void _selectSquare(Square square) {
+    final index = _selectedAnswerSquares.length;
+    if (_question.squareTargets[index] != square) {
+      _selectedAnswerSquares.clear();
+      _feedback = _question.feedback.invalidDestination;
+      notifyListeners();
       return;
     }
-    final option = exercise.choiceOptions.where(
+    _selectedAnswerSquares.add(square);
+    final complete =
+        _selectedAnswerSquares.length == _question.squareTargets.length;
+    _exerciseComplete = complete;
+    _feedback = complete
+        ? _question.feedback.success
+        : _question.feedback.progress;
+    notifyListeners();
+  }
+
+  void selectChoice(String optionId) {
+    if (!_acceptsInput || interactionType != LessonInteractionType.choice) {
+      return;
+    }
+    final option = _question.choiceOptions.where(
       (candidate) => candidate.id == optionId,
     );
     if (option.isEmpty) return;
-    if (optionId == exercise.correctChoiceId) {
-      _exerciseComplete = true;
-      _feedback = exercise.feedback.success;
+    if (optionId == _question.correctChoiceId) {
+      if (preparationStage != null) {
+        _preparationComplete = true;
+      } else {
+        _exerciseComplete = true;
+      }
+      _feedback = _question.feedback.success;
     } else {
       _feedback = option.single.feedback;
     }
@@ -154,15 +234,15 @@ class LessonSessionController extends ChangeNotifier {
     if (_turnOrigin == null) {
       final turnsFromSquare = legalTurns.where((turn) => turn.origin == square);
       if (turnsFromSquare.isEmpty) {
-        _feedback = _pieces[square]?.side == perspectiveSide
-            ? exercise.feedback.invalidPiece
-            : exercise.feedback.invalidDestination;
+        _feedback = _pieces[square]?.side == sideToMove
+            ? turnPhase.feedback.invalidPiece
+            : turnPhase.feedback.invalidDestination;
         notifyListeners();
         return;
       }
       _turnOrigin = square;
       _landingPrefix.clear();
-      _feedback = exercise.feedback.selected;
+      _feedback = turnPhase.feedback.selected;
       notifyListeners();
       return;
     }
@@ -175,20 +255,39 @@ class LessonSessionController extends ChangeNotifier {
     if (_landingPrefix.isEmpty &&
         legalTurns.any((turn) => turn.origin == square)) {
       _turnOrigin = square;
-      _feedback = exercise.feedback.selected;
-    } else if (_pieces[square]?.side == perspectiveSide) {
+      _feedback = turnPhase.feedback.selected;
+    } else if (_pieces[square]?.side == sideToMove) {
       if (_landingPrefix.isEmpty) _turnOrigin = null;
-      _feedback = exercise.feedback.invalidPiece;
+      _feedback = turnPhase.feedback.invalidPiece;
     } else {
-      _feedback = exercise.feedback.invalidDestination;
+      _feedback = turnPhase.feedback.invalidDestination;
     }
     notifyListeners();
   }
 
   void _acceptPlayerLanding(Square landing) {
     final index = _landingPrefix.length;
+    if (turnPhase.acceptLegalSubset &&
+        !turnPhase.authoredTurns.any(
+          (turn) =>
+              turn.origin == _turnOrigin &&
+              turn.landings.length > index &&
+              listEquals(turn.landings.take(index).toList(), _landingPrefix) &&
+              turn.landings[index] == landing,
+        )) {
+      // A legal attempt can miss the teaching goal. Restore even a partially
+      // played multi-jump so the learner can retry from the same position.
+      _pieces = Map.of(_state.pieces);
+      _turnOrigin = null;
+      _landingPrefix.clear();
+      _feedback = turnPhase.feedback.goalMiss;
+      notifyListeners();
+      return;
+    }
     final turn = _selectedTurns.firstWhere(
-      (candidate) => candidate.landings[index] == landing,
+      (candidate) =>
+          candidate.landings.length > index &&
+          candidate.landings[index] == landing,
     );
     final from = selectedSquare!;
     final movingPiece = _pieces.remove(from)!;
@@ -232,7 +331,7 @@ class LessonSessionController extends ChangeNotifier {
       return;
     }
 
-    _feedback = exercise.feedback.selected;
+    _feedback = turnPhase.feedback.selected;
     notifyListeners();
   }
 
@@ -241,21 +340,27 @@ class LessonSessionController extends ChangeNotifier {
     _recordedPlayerTurns.add(turn);
     _turnOrigin = null;
     _landingPrefix.clear();
+    _selectedAnswerSquares.clear();
     _applyTurn(turn);
-    if (exercise.opponentReply != null) {
+    if (_followUpPhase == null) {
+      for (final followUp in exercise.followUps) {
+        if (followUp.afterTurn == turn) _pendingFollowUp = followUp.phase;
+      }
+    }
+    if (turnPhase.opponentReply != null) {
       _awaitingOpponent = true;
-      _feedback = exercise.feedback.awaitingReply!;
+      _feedback = turnPhase.feedback.awaitingReply!;
       notifyListeners();
-      _schedule(exercise.opponentPause, _startOpponentReply);
+      _schedule(opponentPause, _startOpponentReply);
       return;
     }
     _exerciseComplete = true;
-    _feedback = exercise.feedback.success;
+    _feedback = turnPhase.feedback.success;
     notifyListeners();
   }
 
   void _startOpponentReply() {
-    final reply = exercise.opponentReply!;
+    final reply = turnPhase.opponentReply!;
     _startTurnAnimation(reply, onFinished: () => _finishOpponentReply(reply));
   }
 
@@ -263,13 +368,19 @@ class LessonSessionController extends ChangeNotifier {
     if (_disposed) return;
     _applyTurn(turn);
     _awaitingOpponent = false;
-    _exerciseComplete = true;
-    _feedback = exercise.feedback.success;
+    if (_pendingFollowUp != null) {
+      _followUpPhase = _pendingFollowUp;
+      _pendingFollowUp = null;
+      _feedback = turnPhase.feedback.initial;
+    } else {
+      _exerciseComplete = true;
+      _feedback = turnPhase.feedback.success;
+    }
     notifyListeners();
   }
 
   void _startTurnAnimation(Turn turn, {required VoidCallback onFinished}) {
-    if (!turn.isCapture || reducedMotion) {
+    if (reducedMotion) {
       onFinished();
       _landed(turn.landings.length);
       return;
@@ -290,12 +401,12 @@ class LessonSessionController extends ChangeNotifier {
       piece: movingPiece,
       from: from,
       to: turn.landings[index],
-      captured: turn.captures[index],
+      captured: turn.isCapture ? turn.captures[index] : null,
       duration: jumpDuration,
     );
     notifyListeners();
     _schedule(jumpDuration, () {
-      _pieces.remove(turn.captures[index]);
+      if (turn.isCapture) _pieces.remove(turn.captures[index]);
       _activeJump = null;
       _landed();
       final next = index + 1;
@@ -315,6 +426,16 @@ class LessonSessionController extends ChangeNotifier {
   }
 
   void continueExercise() {
+    if (canContinuePreparation) {
+      final previous = preparationStage!.previewTurns;
+      _preparationIndex++;
+      _preparationComplete = false;
+      _selectedAnswerSquares.clear();
+      _feedback = _question.feedback.initial;
+      _configurePreparation(previous);
+      notifyListeners();
+      return;
+    }
     if (!_exerciseComplete || _lessonComplete) return;
     if (isFinalExercise) {
       _lessonComplete = true;
@@ -327,6 +448,7 @@ class LessonSessionController extends ChangeNotifier {
   }
 
   void _configureExercise() {
+    _timer?.cancel();
     final next = exercise;
     if (next.boardSource != LessonBoardSource.previousExerciseResult) {
       _state = GameState.custom(
@@ -337,11 +459,114 @@ class LessonSessionController extends ChangeNotifier {
     _pieces = Map.of(_state.pieces);
     _turnOrigin = null;
     _landingPrefix.clear();
+    _selectedAnswerSquares.clear();
     _activeJump = null;
     _lastTurn = null;
     _exerciseComplete = false;
     _awaitingOpponent = false;
-    _feedback = next.feedback.initial;
+    _followUpPhase = null;
+    _pendingFollowUp = null;
+    _preparationIndex = 0;
+    _preparationComplete = false;
+    _demonstrating = false;
+    _previewState = null;
+    _previewPieces = null;
+    _awaitingOpening = next.openingTurns.isNotEmpty;
+    _feedback = _question.feedback.initial;
+    if (_awaitingOpening) {
+      _feedback = next.feedback.opening!;
+      _schedule(next.openingPause, () => _startOpeningTurn(0));
+    } else {
+      _configurePreparation(const []);
+    }
+  }
+
+  void _startOpeningTurn(int index) {
+    final turn = exercise.openingTurns[index];
+    _startTurnAnimation(
+      turn,
+      onFinished: () {
+        if (_disposed) return;
+        _applyTurn(turn);
+        final next = index + 1;
+        if (next < exercise.openingTurns.length) {
+          _schedule(exercise.openingPause, () => _startOpeningTurn(next));
+        } else {
+          _awaitingOpening = false;
+          _feedback = _question.feedback.initial;
+          _configurePreparation(const []);
+        }
+        notifyListeners();
+      },
+    );
+  }
+
+  void _configurePreparation(List<Turn> previous) {
+    final turns = preparationStage?.previewTurns;
+    _previewState = null;
+    _previewPieces = null;
+    if (turns == null || turns.isEmpty) return;
+    var common = 0;
+    _previewState = _state;
+    while (common < previous.length &&
+        common < turns.length &&
+        previous[common] == turns[common]) {
+      _previewState = _engine.applyTurn(_previewState!, turns[common]);
+      common++;
+    }
+    _previewPieces = Map.of(_previewState!.pieces);
+    _demonstrating = common < turns.length;
+    if (_demonstrating) {
+      _schedule(exercise.openingPause, () => _startPreviewTurn(common));
+    }
+  }
+
+  void _startPreviewTurn(int index) {
+    final turn = preparationStage!.previewTurns[index];
+    final piece = _previewState!.pieces[turn.origin]!;
+    if (reducedMotion) {
+      _finishPreviewTurn(index);
+    } else {
+      _previewPieces!.remove(turn.origin);
+      _animatePreviewSegment(turn, 0, piece, () => _finishPreviewTurn(index));
+    }
+  }
+
+  void _animatePreviewSegment(
+    Turn turn,
+    int index,
+    Piece piece,
+    VoidCallback onFinished,
+  ) {
+    _activeJump = JumpAnimation(
+      piece: piece,
+      from: index == 0 ? turn.origin : turn.landings[index - 1],
+      to: turn.landings[index],
+      captured: turn.isCapture ? turn.captures[index] : null,
+      duration: jumpDuration,
+    );
+    notifyListeners();
+    _schedule(jumpDuration, () {
+      if (turn.isCapture) _previewPieces!.remove(turn.captures[index]);
+      _activeJump = null;
+      if (index + 1 < turn.landings.length) {
+        _animatePreviewSegment(turn, index + 1, piece, onFinished);
+      } else {
+        onFinished();
+      }
+    });
+  }
+
+  void _finishPreviewTurn(int index) {
+    final turns = preparationStage!.previewTurns;
+    _previewState = _engine.applyTurn(_previewState!, turns[index]);
+    _previewPieces = Map.of(_previewState!.pieces);
+    if (index + 1 < turns.length) {
+      _schedule(exercise.openingPause, () => _startPreviewTurn(index + 1));
+    } else {
+      _demonstrating = false;
+    }
+    notifyListeners();
   }
 
   void _schedule(Duration duration, VoidCallback callback) {

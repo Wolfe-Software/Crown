@@ -26,6 +26,7 @@ class LessonExerciseScaffold extends StatelessWidget {
     required this.onContinue,
     this.interaction,
     this.showCompletionAction = true,
+    this.boardLabel,
     super.key,
   });
 
@@ -44,6 +45,7 @@ class LessonExerciseScaffold extends StatelessWidget {
   final VoidCallback onContinue;
   final Widget? interaction;
   final bool showCompletionAction;
+  final String? boardLabel;
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -103,10 +105,13 @@ class LessonExerciseScaffold extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          'EXERCISE $exerciseNumber OF $exerciseCount',
-                          style: Theme.of(context).textTheme.labelLarge
-                              ?.copyWith(color: CrownColors.gold),
+                        Flexible(
+                          flex: 4,
+                          child: Text(
+                            'EXERCISE $exerciseNumber OF $exerciseCount',
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(color: CrownColors.gold),
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -151,6 +156,14 @@ class LessonExerciseScaffold extends StatelessWidget {
                       ),
                     ),
                     SizedBox(height: gap),
+                    if (boardLabel case final label?) ...[
+                      Text(
+                        label,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                      SizedBox(height: gap),
+                    ],
                     Center(
                       child: SizedBox.square(
                         dimension: boardSize,

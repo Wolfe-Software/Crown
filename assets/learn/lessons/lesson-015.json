@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 2, "id": "lesson-015", "number": 15, "name": "The Safety Check",
+  "exercises": [
+    {
+      "id": "check-1", "title": "A complete safety check", "instruction": "The worked example rejected one capture. Now use the safety check to choose and play White's sound capture.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 1, "column": 2}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 3}, "side": "black", "rank": "man"},
+        {"square": {"row": 4, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 4, "column": 3}, "side": "black", "rank": "man"},
+        {"square": {"row": 5, "column": 2}, "side": "white", "rank": "king"},
+        {"square": {"row": 6, "column": 1}, "side": "white", "rank": "man"}
+      ]},
+      "preparation": [
+        {"instruction": "1. Check your captures. Scan the whole board. White's king has two legal captures, so an ordinary move is unavailable.",
+          "interaction": {"type": "observation"},
+          "feedback": {"initial": "Before every move: check your captures, test a candidate, inspect their complete reply, then count and decide. Watch one worked example first.", "success": "White must capture. Choosing a route still requires checking its consequences."}},
+        {"instruction": "2. Test a candidate move. Watch the king capture up-right. Inspect its destination and the protection it leaves behind.",
+          "previewTurns": [{"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}], "captures": [{"row": 4, "column": 3}]}],
+          "threat": {"label": "BLACK CAN RECAPTURE THE KING", "routes": [
+            {"origin": {"row": 2, "column": 3}, "landings": [{"row": 4, "column": 5}], "captures": [{"row": 3, "column": 4}]}
+          ]},
+          "interaction": {"type": "observation"},
+          "feedback": {"initial": "The king takes one man, but its new square is beside Black's central attacker with an empty landing beyond it.", "success": "The candidate must be tested against Black's reply."}},
+        {"instruction": "3. Inspect their complete reply. Watch Black jump the king. Look for every continuation and any immediate White recapture.",
+          "previewTurns": [
+            {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}], "captures": [{"row": 4, "column": 3}]},
+            {"origin": {"row": 2, "column": 3}, "landings": [{"row": 4, "column": 5}], "captures": [{"row": 3, "column": 4}]}
+          ], "interaction": {"type": "observation"},
+          "feedback": {"initial": "Black captures the king and stops. White's remaining man cannot recapture that attacker. Include backward jumps and alternative routes when checking kings.", "success": "The full reply loses White's king with no immediate recovery."}},
+        {"instruction": "4. Count and decide. White lost a king; Black lost a man. Reject this candidate and test the other legal capture before moving.",
+          "previewTurns": [
+            {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}], "captures": [{"row": 4, "column": 3}]},
+            {"origin": {"row": 2, "column": 3}, "landings": [{"row": 4, "column": 5}], "captures": [{"row": 3, "column": 4}]}
+          ], "interaction": {"type": "observation"},
+          "feedback": {"initial": "Count both sides' losses and ranks after all jumps and immediate recaptures. A compulsory capture cannot be declined, but a better legal route can be chosen. Continue to restore the starting board and play it.", "success": "Compare the other legal route on the starting board."}}
+      ],
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 0}], "captures": [{"row": 4, "column": 1}]}
+      ]},
+      "feedback": {"initial": "The actual board is restored. Repeat steps 2–4 for the other capture: picture its landing, check Black's reply, then count before choosing.", "selected": "Check both legal king landings. Which one avoids Black's recapture?", "success": "White wins one man without losing its king. You rejected the worked example's losing route and played the sound alternative.", "goalMiss": "That route gives up the king for a man, as the example showed. Check Black's reply after the other landing.", "invalidPiece": "Step 1: a capture exists. Use White's king.", "invalidDestination": "Choose a legal king capture landing."}
+    },
+    {
+      "id": "check-2", "title": "Check what you leave behind", "instruction": "Use the four-step check to move a black man safely without removing the middle blocker.", "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 6, "column": 7}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 6}, "side": "black", "rank": "man"},
+        {"square": {"row": 4, "column": 5}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 4}, "side": "black", "rank": "man"}
+      ]},
+      "threat": {"label": "IF THE MIDDLE BLOCKER MOVES, WHITE CAN TAKE TWO", "afterTurn": {"origin": {"row": 4, "column": 5}, "landings": [{"row": 5, "column": 4}], "captures": []}, "routes": [
+        {"origin": {"row": 6, "column": 7}, "landings": [{"row": 4, "column": 5}, {"row": 2, "column": 3}], "captures": [{"row": 5, "column": 6}, {"row": 3, "column": 4}]}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 5, "column": 6}, "landings": [{"row": 6, "column": 5}], "captures": []},
+        {"origin": {"row": 3, "column": 4}, "landings": [{"row": 4, "column": 3}], "captures": []}
+      ]},
+      "feedback": {"initial": "1. Check your captures: none exist. 2. Test a candidate's departure and destination. 3. Inspect White's full reply. 4. Count and decide before moving.", "selected": "What protection does this piece leave behind? The marked route opens only if the middle blocker moves.", "success": "White has no capture. You preserved the blocker and checked the safety of the whole position, not just the moving man.", "goalMiss": "That move opens White's double jump and loses two teammates. Keep the middle blocker and test another candidate.", "invalidPiece": "Choose a movable black man.", "invalidDestination": "Choose a legal forward step."}
+    },
+    {
+      "id": "check-3", "title": "Include the whole reply", "instruction": "Use the safety check to stop Black's king without conceding either capture branch.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 5, "column": 2}, "side": "black", "rank": "king"},
+        {"square": {"row": 4, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 2, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 5}, "side": "white", "rank": "man"}
+      ]},
+      "threat": {"label": "KING'S REPLY — BOTH COMPLETE BRANCHES", "routes": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}, {"row": 1, "column": 2}], "captures": [{"row": 4, "column": 3}, {"row": 2, "column": 3}]},
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}, {"row": 5, "column": 6}], "captures": [{"row": 4, "column": 3}, {"row": 4, "column": 5}]}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 4, "column": 3}, "landings": [{"row": 3, "column": 2}], "captures": []},
+        {"origin": {"row": 4, "column": 3}, "landings": [{"row": 3, "column": 4}], "captures": []},
+        {"origin": {"row": 4, "column": 5}, "landings": [{"row": 3, "column": 4}], "captures": []}
+      ]},
+      "feedback": {"initial": "1. Check your captures. 2. Picture a candidate move. 3. Inspect every jump in both king branches. 4. Count the complete result and choose a move that saves all your men.", "selected": "Test whether your move removes the shared first target or denies the shared landing. Saving only one second target leaves another route.", "success": "The king has no capture. You checked its whole reply and stopped both branches.", "goalMiss": "Black can still capture after that move. Check the shared first target and landing rather than just one second jump.", "invalidPiece": "Choose a movable white man.", "invalidDestination": "Choose a legal forward step."}
+    },
+    {
+      "id": "check-4", "title": "A sound exchange", "instruction": "Move White's king into the support position you checked, then complete the recapture.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 4, "column": 1}, "side": "white", "rank": "king"},
+        {"square": {"row": 6, "column": 1}, "side": "white", "rank": "man"}
+      ]},
+      "preparation": [
+        {"instruction": "The example moves the king into support. Black can take the advanced man along the marked route. Count White's legal recapture: is this an equal exchange or a material loss?",
+          "previewTurns": [{"origin": {"row": 4, "column": 1}, "landings": [{"row": 5, "column": 2}], "captures": []}],
+          "threat": {"label": "BLACK'S CAPTURE AFTER THE SUPPORT MOVE", "routes": [
+            {"origin": {"row": 2, "column": 1}, "landings": [{"row": 4, "column": 3}], "captures": [{"row": 3, "column": 2}]}
+          ]},
+          "interaction": {"type": "choice", "correctOptionId": "equal", "options": [
+            {"id": "equal", "label": "Equal exchange", "feedback": "Correct."},
+            {"id": "loss", "label": "Lose material", "feedback": "Check the king's capture after Black lands. White can recover the attacker without losing its king."}
+          ]},
+          "feedback": {"initial": "1. No White capture exists. 2. Test the support move. 3. Inspect Black's complete reply. 4. Include White's recapture before comparing losses.", "success": "Keep the candidate: White loses one man and recaptures one black man. The king survives. Now play the support move and verify the exchange."}}
+      ],
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 4, "column": 1}, "landings": [{"row": 5, "column": 2}], "captures": []}
+      ], "opponentReply": {"origin": {"row": 2, "column": 1}, "landings": [{"row": 4, "column": 3}], "captures": [{"row": 3, "column": 2}]}, "opponentPauseMs": 550,
+        "followUps": [{
+          "afterTurn": {"origin": {"row": 4, "column": 1}, "landings": [{"row": 5, "column": 2}], "captures": []},
+          "instruction": "Black played the capture you checked. Recapture with White's supporting king.", "acceptance": "exactLegalSet",
+          "turns": [{"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}], "captures": [{"row": 4, "column": 3}]}],
+          "feedback": {"initial": "Finish the exchange before judging its result.", "selected": "Take the attacker with the king.", "success": "Each side lost one man and White kept its king. You checked and played a sound exchange.", "invalidPiece": "Use White's recapturing king.", "invalidDestination": "Choose the recapture landing."}
+        }]
+      },
+      "feedback": {"initial": "The starting board is restored. Play the support move you checked.", "selected": "Move the king onto the diagonal behind Black's landing.", "awaitingReply": "Watch Black's predicted capture, then use the support you created.", "success": "Each side lost one man. Your safety check included the recapture.", "goalMiss": "For this exercise, make the checked support move with the king. It must be able to recapture Black's attacker.", "invalidPiece": "Choose White's supporting king.", "invalidDestination": "Choose a legal king step."}
+    },
+    {
+      "id": "check-5", "title": "Apply the routine yourself", "instruction": "Use the full safety check to choose Black's sound capture. Play it when you have checked the reply and counted the result.", "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 6, "column": 5}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 4}, "side": "white", "rank": "man"},
+        {"square": {"row": 3, "column": 6}, "side": "white", "rank": "king"},
+        {"square": {"row": 3, "column": 4}, "side": "white", "rank": "man"},
+        {"square": {"row": 2, "column": 5}, "side": "black", "rank": "king"},
+        {"square": {"row": 1, "column": 6}, "side": "black", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 2, "column": 5}, "landings": [{"row": 4, "column": 7}], "captures": [{"row": 3, "column": 6}]}
+      ]},
+      "feedback": {"initial": "1. Check your captures. 2. Test a candidate move. 3. Inspect their complete reply. 4. Count and decide. Compare alternatives before choosing.", "selected": "Picture both complete king captures and White's reply after each. Count losses and ranks.", "success": "Black captured a king without losing a piece. You chose the sound route using the safety check. Repeat the same four steps before every move.", "goalMiss": "White can recapture your king after that landing. Reject the king-for-man loss and test the other legal capture.", "invalidPiece": "Black has a compulsory capture. Select its king.", "invalidDestination": "Choose a legal king capture landing."}
+    }
+  ]
+}

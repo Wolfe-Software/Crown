@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2, "id": "lesson-009", "number": 9, "name": "Spot the Threat",
+  "exercises": [
+    {
+      "id": "threat-1", "title": "Escape the threat", "instruction": "Move White's threatened man out of Black's capture diagonal.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 3, "column": 2}, "landings": [{"row": 2, "column": 3}], "captures": []}
+      ]},
+      "feedback": {"initial": "Black would jump this man if given the move. Save it now.", "selected": "Leave the attacker's diagonal.", "success": "White escaped. Black no longer has an adjacent target to jump.", "invalidPiece": "Move the threatened white man.", "invalidDestination": "Choose a legal escape square."}
+    },
+    {
+      "id": "threat-2", "title": "Rescue Black's man", "instruction": "Move Black's threatened man away from White's forward jump.", "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 4, "column": 3}, "side": "black", "rank": "man"},
+        {"square": {"row": 5, "column": 4}, "side": "white", "rank": "man"},
+        {"square": {"row": 6, "column": 5}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 4, "column": 3}, "landings": [{"row": 5, "column": 2}], "captures": []}
+      ]},
+      "feedback": {"initial": "White threatens to jump the black man on its next turn.", "selected": "Move Black off White's capture diagonal.", "success": "Black's man is safe from an immediate capture. Read threats from either side.", "invalidPiece": "Use the threatened black man.", "invalidDestination": "Choose a legal escape destination."}
+    },
+    {
+      "id": "threat-3", "title": "Escape a backward threat", "instruction": "Move White's man away from the black king's backward capture.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 5, "column": 0}, "side": "black", "rank": "king"},
+        {"square": {"row": 4, "column": 1}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "turns": [
+        {"origin": {"row": 4, "column": 1}, "landings": [{"row": 3, "column": 0}], "captures": []},
+        {"origin": {"row": 4, "column": 1}, "landings": [{"row": 3, "column": 2}], "captures": []}
+      ]},
+      "feedback": {"initial": "Kings threaten backward too. Either forward step can take White out of immediate danger.", "selected": "Choose either legal escape.", "success": "White escaped the king's backward jump. Check all king diagonals before moving.", "invalidPiece": "Move the threatened white man.", "invalidDestination": "Choose a legal forward step."}
+    },
+    {
+      "id": "threat-4", "title": "Exploit an exposed piece", "instruction": "Watch White leave two pieces threatened, then capture either one with Black's king.", "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 3, "column": 2}, "side": "black", "rank": "king"},
+        {"square": {"row": 2, "column": 3}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 4}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "openingTurns": [
+        {"origin": {"row": 5, "column": 4}, "landings": [{"row": 4, "column": 3}], "captures": []}
+      ], "turns": [
+        {"origin": {"row": 3, "column": 2}, "landings": [{"row": 1, "column": 4}], "captures": [{"row": 2, "column": 3}]},
+        {"origin": {"row": 3, "column": 2}, "landings": [{"row": 5, "column": 4}], "captures": [{"row": 4, "column": 3}]}
+      ]},
+      "feedback": {"opening": "White advances into the king's other capture diagonal instead of rescuing its threatened man.", "initial": "White has left two targets. Take either available capture.", "selected": "Compare the king's forward and backward jumps.", "success": "Black won one white man. You saw White's move create another target before exploiting the position.", "invalidPiece": "Use the black king.", "invalidDestination": "Choose either legal capture landing."}
+    },
+    {
+      "id": "threat-5", "title": "Block the landing", "instruction": "Move White's rear piece to block Black's landing and protect its teammate.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 1, "column": 0}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 2}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 4}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 5, "column": 4}, "landings": [{"row": 4, "column": 3}], "captures": []}
+      ]},
+      "feedback": {"initial": "Black needs an empty square beyond the advanced white piece.", "selected": "Choose the move that occupies Black's required landing.", "success": "The rear piece now blocks the landing. Black cannot capture its teammate.", "goalMiss": "Use the rear piece to occupy the landing beyond its teammate. That move does not block the jump.", "invalidPiece": "Choose a movable white piece.", "invalidDestination": "Choose a legal diagonal destination."}
+    }
+  ]
+}

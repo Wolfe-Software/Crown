@@ -24,6 +24,37 @@ class _MemoryAssetBundle extends CachingAssetBundle {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  test('requires five exercises in Unit 2 standard lessons', () async {
+    const path = 'lesson-009.json';
+    final json = (jsonDecode(
+      await rootBundle.loadString('assets/learn/lessons/lesson-009.json'),
+    ) as Map).cast<String, Object?>();
+    (json['exercises']! as List).removeLast();
+    final loader = LessonAssetLoader(
+      bundle: _MemoryAssetBundle({path: jsonEncode(json)}),
+    );
+    final lesson = LearnLesson.fromJson({
+      'id': 'lesson-009',
+      'number': 9,
+      'name': 'Spot the Threat',
+      'objective': 'Find threats.',
+      'overview': 'Find threats.',
+      'status': 'available',
+      'definitionAsset': path,
+    });
+
+    await expectLater(
+      loader.loadDefinition(lesson),
+      throwsA(
+        isA<FormatException>().having(
+          (error) => error.message,
+          'message',
+          contains('exactly five exercises'),
+        ),
+      ),
+    );
+  });
+
   for (final (field, value) in <(String, Object?)>[
     ('type', 'unknown'),
     ('startingPosition', 'custom'),

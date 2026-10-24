@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 2, "id": "lesson-011", "number": 11, "name": "Find a Safe Square",
+  "exercises": [
+    {
+      "id": "safe-1", "title": "Use a blocked landing", "instruction": "Move the right-hand white man to a destination Black cannot capture.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 3, "column": 2}, "side": "black", "rank": "man"},
+        {"square": {"row": 5, "column": 0}, "side": "white", "rank": "man"},
+        {"square": {"row": 5, "column": 2}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 4, "column": 1}], "captures": []}
+      ]},
+      "feedback": {"initial": "Test Black's landing after each candidate move.", "selected": "Compare both legal destinations of the right-hand man.", "success": "White's teammate occupies the square Black would need to land on. The moved man cannot be jumped.", "goalMiss": "Move the right-hand man where its teammate blocks Black's landing. The other destination allows an immediate capture.", "invalidPiece": "Choose a movable white piece.", "invalidDestination": "Choose a legal step."}
+    },
+    {
+      "id": "safe-2", "title": "Choose the covered side", "instruction": "Move Black's man nearest the center to a destination White cannot capture.", "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 2, "column": 3}, "side": "black", "rank": "man"},
+        {"square": {"row": 2, "column": 5}, "side": "black", "rank": "man"},
+        {"square": {"row": 4, "column": 3}, "side": "white", "rank": "man"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 2, "column": 3}, "landings": [{"row": 3, "column": 4}], "captures": []}
+      ]},
+      "feedback": {"initial": "Find the black man nearest the center, then compare its two steps.", "selected": "One destination has a teammate blocking White's landing.", "success": "Black's teammate denies White the landing beyond the moved piece.", "goalMiss": "Use the specified black man and keep White's landing covered. That choice does not meet the defensive goal.", "invalidPiece": "Choose a movable black piece.", "invalidDestination": "Choose a legal diagonal step."}
+    },
+    {
+      "id": "safe-3", "title": "Respect a king", "instruction": "Move Black's king to any destination the white king cannot capture immediately.", "perspective": "black",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 4, "column": 3}, "side": "black", "rank": "king"},
+        {"square": {"row": 2, "column": 1}, "side": "white", "rank": "king"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 4, "column": 3}, "landings": [{"row": 3, "column": 4}], "captures": []},
+        {"origin": {"row": 4, "column": 3}, "landings": [{"row": 5, "column": 2}], "captures": []},
+        {"origin": {"row": 4, "column": 3}, "landings": [{"row": 5, "column": 4}], "captures": []}
+      ]},
+      "feedback": {"initial": "Check every diagonal of the opponent's king.", "selected": "Three steps are safe; one gives White an immediate jump.", "success": "Your destination avoids an immediate king capture. More than one safe move can satisfy the goal.", "goalMiss": "White's king can jump your king there. Choose another legal destination.", "invalidPiece": "Move the black king.", "invalidDestination": "Choose a legal king step."}
+    },
+    {
+      "id": "safe-4", "title": "Use a backward escape", "instruction": "Move White's edge king backward to avoid Black's jump.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "white", "pieces": [
+        {"square": {"row": 3, "column": 2}, "side": "black", "rank": "man"},
+        {"square": {"row": 5, "column": 0}, "side": "white", "rank": "king"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "legalSubset", "turns": [
+        {"origin": {"row": 5, "column": 0}, "landings": [{"row": 6, "column": 1}], "captures": []}
+      ]},
+      "feedback": {"initial": "The forward step enters a jump. A king has a backward escape as well.", "selected": "Compare both directions and keep the king safe.", "success": "White used the king's backward step to improve a cramped position without losing material.", "goalMiss": "Black can capture the king on that forward square. Use its backward escape.", "invalidPiece": "Move White's king.", "invalidDestination": "Choose a legal king step."}
+    },
+    {
+      "id": "safe-5", "title": "Captures come first", "instruction": "Watch Black expose a man, then make White's compulsory capture.", "perspective": "white",
+      "board": {"source": "custom", "sideToMove": "black", "pieces": [
+        {"square": {"row": 0, "column": 1}, "side": "black", "rank": "man"},
+        {"square": {"row": 3, "column": 4}, "side": "black", "rank": "man"},
+        {"square": {"row": 5, "column": 2}, "side": "white", "rank": "king"}
+      ]},
+      "interaction": {"type": "turn", "acceptance": "exactLegalSet", "openingTurns": [
+        {"origin": {"row": 3, "column": 4}, "landings": [{"row": 4, "column": 3}], "captures": []}
+      ], "turns": [
+        {"origin": {"row": 5, "column": 2}, "landings": [{"row": 3, "column": 4}], "captures": [{"row": 4, "column": 3}]}
+      ]},
+      "feedback": {"opening": "Black steps next to White's king and leaves its man capturable.", "initial": "Look for captures before comparing ordinary destinations.", "selected": "Jump with the white king.", "success": "White exploited the move you watched, taking a man without allowing an immediate recapture.", "invalidPiece": "Use the capturing white king.", "invalidDestination": "A capture is compulsory. Choose its landing."}
+    }
+  ]
+}

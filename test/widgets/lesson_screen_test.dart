@@ -23,6 +23,375 @@ void main() {
     );
   });
 
+  testWidgets(
+    'move goals show all legal destinations and preserve the board on retry',
+    (tester) async {
+      final lesson = catalog.definitions['lesson-011']!;
+      final exercise = lesson.exercises.first;
+      final controller = LessonSessionController(
+        definition: LessonDefinition(
+          id: lesson.id,
+          number: lesson.number,
+          name: lesson.name,
+          exercises: [exercise],
+        ),
+        reducedMotion: true,
+      );
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LessonScreen(
+            controller: controller,
+            highContrast: false,
+            reducedMotion: true,
+            sound: false,
+          ),
+        ),
+      );
+      final initial = controller.pieces;
+      await tester.ensureVisible(find.byType(CheckersBoard));
+      final boardRect = tester.getRect(find.byType(CheckersBoard));
+      await tester.tap(find.byKey(const ValueKey('board-square-5-2')));
+      await tester.pump();
+      var board = tester.widget<CheckersBoard>(find.byType(CheckersBoard));
+      expect(board.destinations, {const Square(4, 1), const Square(4, 3)});
+      expect(find.byType(OutlinedButton), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('board-square-4-3')));
+      await tester.pump();
+      expect(find.text(exercise.feedback.goalMiss), findsOneWidget);
+      expect(controller.pieces, initial);
+      expect(tester.getRect(find.byType(CheckersBoard)), boardRect);
+      expect(find.text('COMPLETE LESSON'), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('board-square-5-2')));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('board-square-4-1')));
+      await tester.pump();
+      board = tester.widget<CheckersBoard>(find.byType(CheckersBoard));
+      expect(board.pieces[const Square(4, 1)], const Piece.whiteMan());
+      expect(board.pieces, isNot(contains(const Square(5, 2))));
+      expect(board.onSquareTap, isNull);
+      expect(find.text('COMPLETE LESSON'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'opening demonstrations disable board input until the learner can recapture',
+    (tester) async {
+      final lesson = catalog.definitions['lesson-012']!;
+      final exercise = lesson.exercises.first;
+      final controller = LessonSessionController(
+        definition: LessonDefinition(
+          id: lesson.id,
+          number: lesson.number,
+          name: lesson.name,
+          exercises: [exercise],
+        ),
+      );
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LessonScreen(
+            controller: controller,
+            highContrast: false,
+            reducedMotion: false,
+            sound: false,
+          ),
+        ),
+      );
+      var board = tester.widget<CheckersBoard>(find.byType(CheckersBoard));
+      expect(board.onSquareTap, isNull);
+      expect(find.text(exercise.feedback.opening!), findsOneWidget);
+      expect(find.text('COMPLETE LESSON'), findsNothing);
+      await tester.pump(exercise.openingPause);
+      board = tester.widget<CheckersBoard>(find.byType(CheckersBoard));
+      expect(board.activeJump, isNotNull);
+      expect(board.onSquareTap, isNull);
+      await tester.pump(LessonSessionController.jumpDuration);
+      board = tester.widget<CheckersBoard>(find.byType(CheckersBoard));
+      expect(board.onSquareTap, isNotNull);
+      expect(board.bottomSide, Side.white);
+      expect(find.text(exercise.feedback.initial), findsOneWidget);
+      await tester.ensureVisible(find.byType(CheckersBoard));
+      await tester.tap(find.byKey(const ValueKey('board-square-5-2')));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('board-square-3-4')));
+      await tester.pump();
+      expect(
+        tester.widget<CheckersBoard>(find.byType(CheckersBoard)).onSquareTap,
+        isNull,
+      );
+      await tester.pump(LessonSessionController.jumpDuration);
+      expect(find.text(exercise.feedback.success), findsOneWidget);
+      expect(find.text('COMPLETE LESSON'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'Unit 2 plays through coaching, shared cards, and moves on a compact phone with scaled text',
+    (tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      for (var number = 9; number <= 15; number++) {
+        final lesson =
+            catalog.definitions['lesson-${number.toString().padLeft(3, '0')}']!;
+        final controller = LessonSessionController(
+          definition: lesson,
+          reducedMotion: true,
+        );
+        await tester.pumpWidget(
+          MaterialApp(
+            home: MediaQuery(
+              data: const MediaQueryData(textScaler: TextScaler.linear(1.3)),
+              child: LessonScreen(
+                controller: controller,
+                highContrast: true,
+                reducedMotion: true,
+                sound: false,
+              ),
+            ),
+          ),
+        );
+        for (final exercise in lesson.exercises) {
+          expect(controller.exerciseId, exercise.id);
+          expect(controller.selectedSquare, isNull);
+          for (final _ in exercise.openingTurns) {
+            await tester.pump(exercise.openingPause);
+          }
+          final livePieces = Map.of(controller.pieces);
+          for (final stage in exercise.preparation) {
+            while (!controller.canContinuePreparation &&
+                !controller.acceptsInput) {
+              await tester.pump(exercise.openingPause);
+            }
+            expect(find.text(stage.question.instruction), findsOneWidget);
+            if (stage.question.interactionType ==
+                LessonInteractionType.choice) {
+              final answer = find.byKey(
+                ValueKey('lesson-choice-${stage.question.correctChoiceId}'),
+              );
+              await tester.ensureVisible(answer);
+              await tester.tap(answer);
+              await tester.pump();
+            } else {
+              await tester.ensureVisible(find.byType(CheckersBoard));
+              expect(
+                tester.getSize(find.byType(CheckersBoard)),
+                const Size(288, 288),
+              );
+              expect(
+                stage.question.interactionType,
+                LessonInteractionType.observation,
+              );
+            }
+            expect(controller.pieces, livePieces);
+            expect(controller.exerciseComplete, isFalse);
+            expect(controller.canContinuePreparation, isTrue);
+            expect(tester.takeException(), isNull);
+            final action = find.byKey(
+              const ValueKey('lesson-continue-compact'),
+            );
+            await tester.ensureVisible(action);
+            await tester.tap(action);
+            await tester.pump();
+          }
+          for (
+            var phaseNumber = 1;
+            phaseNumber <= 2 && !controller.exerciseComplete;
+            phaseNumber++
+          ) {
+            expect(controller.playerPhaseNumber, phaseNumber);
+            expect(controller.acceptsInput, isTrue);
+            expect(find.text(controller.instruction), findsOneWidget);
+            await tester.ensureVisible(find.byType(CheckersBoard));
+            await tester.pump();
+            expect(
+              tester.getSize(find.byType(CheckersBoard)),
+              const Size(288, 288),
+            );
+            expect(find.byType(OutlinedButton), findsNothing);
+            final phase = controller.turnPhase;
+            final turn = controller.acceptedTurns.first;
+            await tester.tap(
+              find.byKey(
+                ValueKey(
+                  'board-square-${turn.origin.row}-${turn.origin.column}',
+                ),
+              ),
+            );
+            await tester.pump();
+            for (final landing in turn.landings) {
+              await tester.tap(
+                find.byKey(
+                  ValueKey('board-square-${landing.row}-${landing.column}'),
+                ),
+              );
+              await tester.pump();
+            }
+            if (phase.opponentReply != null) {
+              expect(controller.exerciseComplete, isFalse);
+              expect(
+                find.byKey(const ValueKey('lesson-continue-compact')),
+                findsNothing,
+              );
+              expect(
+                tester
+                    .widget<CheckersBoard>(find.byType(CheckersBoard))
+                    .onSquareTap,
+                isNull,
+              );
+              await tester.pump(phase.opponentPause);
+            }
+            if (!controller.exerciseComplete) {
+              expect(controller.playerPhaseNumber, 2);
+              expect(controller.selectedSquare, isNull);
+              expect(
+                find.byKey(const ValueKey('lesson-continue-compact')),
+                findsNothing,
+              );
+              expect(find.text('COMPLETE LESSON'), findsNothing);
+            }
+          }
+          expect(controller.exerciseComplete, isTrue, reason: exercise.id);
+          expect(
+            find.text(controller.turnPhase.feedback.success),
+            findsOneWidget,
+          );
+          expect(tester.takeException(), isNull, reason: exercise.id);
+          if (controller.isFinalExercise) {
+            expect(find.text('COMPLETE LESSON'), findsOneWidget);
+          } else {
+            final action = find.byKey(
+              const ValueKey('lesson-continue-compact'),
+            );
+            await tester.ensureVisible(action);
+            await tester.tap(action);
+            await tester.pump();
+          }
+        }
+        await tester.pumpWidget(const SizedBox.shrink());
+        controller.dispose();
+      }
+    },
+  );
+
+  testWidgets(
+    'the displayed opponent mistake moves from its original square before exploitation',
+    (tester) async {
+      final lesson = catalog.definitions['lesson-013']!;
+      final exercise = lesson.exercises[1];
+      final controller = LessonSessionController(
+        definition: LessonDefinition(
+          id: lesson.id,
+          number: lesson.number,
+          name: lesson.name,
+          exercises: [exercise],
+        ),
+      );
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LessonScreen(
+            controller: controller,
+            highContrast: false,
+            reducedMotion: false,
+            sound: false,
+          ),
+        ),
+      );
+      var board = tester.widget<CheckersBoard>(find.byType(CheckersBoard));
+      expect(board.pieces[const Square(4, 3)], const Piece.whiteMan());
+      expect(board.pieces[const Square(3, 2)], isNull);
+      expect(board.onSquareTap, isNull);
+      expect(find.text(exercise.feedback.opening!), findsOneWidget);
+      await tester.pump(exercise.openingPause);
+      board = tester.widget<CheckersBoard>(find.byType(CheckersBoard));
+      expect(board.activeJump?.from, const Square(4, 3));
+      expect(board.activeJump?.to, const Square(3, 2));
+      expect(board.activeJump?.captured, isNull);
+      expect(find.byKey(const ValueKey('jumping-piece')), findsOneWidget);
+      expect(board.onSquareTap, isNull);
+      await tester.pump(LessonSessionController.jumpDuration);
+      board = tester.widget<CheckersBoard>(find.byType(CheckersBoard));
+      expect(board.pieces[const Square(3, 2)], const Piece.whiteMan());
+      expect(board.onSquareTap, isNotNull);
+      await tester.ensureVisible(find.byType(CheckersBoard));
+      await tester.tap(find.byKey(const ValueKey('board-square-2-1')));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('board-square-4-3')));
+      await tester.pump();
+      await tester.pump(LessonSessionController.jumpDuration);
+      expect(find.text(exercise.feedback.success), findsOneWidget);
+      expect(find.text('COMPLETE LESSON'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
+  testWidgets(
+    'a supporting move hands the board back for the branch-specific payoff',
+    (tester) async {
+      final lesson = catalog.definitions['lesson-012']!;
+      final exercise = lesson.exercises.last;
+      final controller = LessonSessionController(
+        definition: LessonDefinition(
+          id: lesson.id,
+          number: lesson.number,
+          name: lesson.name,
+          exercises: [exercise],
+        ),
+      );
+      addTearDown(controller.dispose);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LessonScreen(
+            controller: controller,
+            highContrast: false,
+            reducedMotion: false,
+            sound: false,
+          ),
+        ),
+      );
+      await tester.ensureVisible(find.byType(CheckersBoard));
+      await tester.tap(find.byKey(const ValueKey('board-square-6-3')));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('board-square-5-4')));
+      await tester.pump();
+      expect(find.text('COMPLETE LESSON'), findsNothing);
+      await tester.pump(exercise.opponentPause);
+      expect(
+        tester.widget<CheckersBoard>(find.byType(CheckersBoard)).onSquareTap,
+        isNull,
+      );
+      await tester.pump(LessonSessionController.jumpDuration);
+      final phase = controller.turnPhase;
+      expect(controller.playerPhaseNumber, 2);
+      expect(find.text(phase.instruction), findsOneWidget);
+      expect(find.text(phase.feedback.initial), findsOneWidget);
+      expect(find.text('COMPLETE LESSON'), findsNothing);
+      expect(controller.selectedSquare, isNull);
+      expect(controller.recordedPlayerTurns, hasLength(1));
+      await tester.ensureVisible(find.byType(CheckersBoard));
+      await tester.tap(find.byKey(const ValueKey('board-square-5-4')));
+      await tester.pump();
+      expect(
+        tester.widget<CheckersBoard>(find.byType(CheckersBoard)).destinations,
+        {const Square(3, 2)},
+      );
+      await tester.tap(find.byKey(const ValueKey('board-square-3-2')));
+      await tester.pump();
+      expect(find.text('COMPLETE LESSON'), findsNothing);
+      await tester.pump(LessonSessionController.jumpDuration);
+      expect(controller.recordedPlayerTurns, hasLength(2));
+      expect(find.text(phase.feedback.success), findsOneWidget);
+      expect(find.text('COMPLETE LESSON'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
   testWidgets('presents any definition through the standard lesson screen', (
     tester,
   ) async {

@@ -85,42 +85,47 @@ class _LessonChoiceCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: enabled ? onTap : null,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              SizedBox.square(
-                dimension: iconSize,
-                child: switch (option.icon!) {
-                  LessonChoiceIcon.blackChecker => CheckerPiece(
-                    style: CheckerPieceStyle.black,
-                    isKing: true,
-                    reducedMotion: reducedMotion,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: option.icon == null ? 64 : 0),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (option.icon != null) ...[
+                  SizedBox.square(
+                    dimension: iconSize,
+                    child: switch (option.icon!) {
+                      LessonChoiceIcon.blackChecker => CheckerPiece(
+                        style: CheckerPieceStyle.black,
+                        isKing: true,
+                        reducedMotion: reducedMotion,
+                      ),
+                      LessonChoiceIcon.whiteChecker => CheckerPiece(
+                        style: CheckerPieceStyle.white,
+                        isKing: true,
+                        reducedMotion: reducedMotion,
+                      ),
+                      LessonChoiceIcon.draw => CrownIcon(
+                        variant: CrownIconVariant.draw,
+                        size: iconSize,
+                      ),
+                    },
                   ),
-                  LessonChoiceIcon.whiteChecker => CheckerPiece(
-                    style: CheckerPieceStyle.white,
-                    isKing: true,
-                    reducedMotion: reducedMotion,
+                  const SizedBox(height: 8),
+                ],
+                Text(
+                  option.label,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: CrownColors.ink,
+                    fontSize: option.icon == null ? 13 : 10,
+                    letterSpacing: .8,
                   ),
-                  LessonChoiceIcon.draw => CrownIcon(
-                    variant: CrownIconVariant.draw,
-                    size: iconSize,
-                  ),
-                },
-              ),
-              const SizedBox(height: 8),
-              Text(
-                option.label,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: CrownColors.ink,
-                  fontSize: 10,
-                  letterSpacing: .8,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
